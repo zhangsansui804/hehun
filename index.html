@@ -41,7 +41,6 @@ body{
   display:flex;flex-direction:column;
 }
 
-/* ===== 星空粒子 ===== */
 .stars-layer{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0;}
 .star-particle{
   position:absolute;background:var(--gold);border-radius:50%;
@@ -54,7 +53,6 @@ body{
   100%{transform:translateY(-15vh) scale(1.5);opacity:0}
 }
 
-/* ===== 浮动云雾 ===== */
 .clouds-layer{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0;}
 .cloud{
   position:absolute;
@@ -66,12 +64,11 @@ body{
 }
 @keyframes cloudDrift{
   0%{transform:translateX(-30%) translateY(0);opacity:0}
-  10%{opacity:0.5}
+  10%{不透明性:0.5}
   90%{opacity:0.3}
   100%{transform:translateX(110vw) translateY(-20px);opacity:0}
 }
 
-/* ===== 八卦暗纹 ===== */
 .bagua-bg{
   position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
   width:300px;height:300px;
@@ -86,11 +83,9 @@ body{
   border-radius:50%;
 }
 
-/* ===== 页面容器 ===== */
 .screen{display:none;flex-direction:column;flex:1;padding:0 20px;position:relative;z-index:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .screen.active{display:flex;}
 
-/* ===== 通用组件 ===== */
 .glass-card{
   background:var(--card-bg);
   backdrop-filter:var(--glass-blur);
@@ -143,7 +138,6 @@ body{
   border:1.5px solid rgba(212,175,55,0.5);
 }
 
-/* Toast提示 */
 .toast{
   position:fixed;top:30%;left:50%;transform:translate(-50%,-50%);
   background:rgba(200,121,108,0.95);
@@ -156,7 +150,6 @@ body{
 @keyframes toastIn{from{opacity:0;transform:translate(-50%,-50%) scale(0.8)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
 @keyframes toastOut{from{opacity:1}to{opacity:0;transform:translate(-50%,-70%)}}
 
-/* ===== 输入页 ===== */
 .topbar{height:56px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;}
 .topbar-title{
   font-size:24px;color:var(--gold);
@@ -228,7 +221,6 @@ body{
 .trust-bar{text-align:center;font-size:11px;color:rgba(242,233,208,0.35);margin-top:12px;letter-spacing:2px;}
 .trust-bar span{color:var(--gold);font-weight:600;}
 
-/* ===== 加载页 ===== */
 .loading-screen{justify-content:center;align-items:center;text-align:center;}
 .ring-container{position:relative;width:130px;height:130px;margin-bottom:40px;}
 .ring-outer{
@@ -276,7 +268,6 @@ body{
 .loading-text{color:rgba(242,233,208,0.7);font-size:15px;letter-spacing:4px;margin-bottom:12px;min-height:22px;}
 .loading-sub{color:rgba(242,233,208,0.25);font-size:12px;letter-spacing:2px;}
 
-/* ===== 结果页 ===== */
 .result-header{text-align:center;padding:28px 0 10px;}
 .name-row{display:flex;justify-content:center;align-items:center;gap:16px;}
 .name-col{font-size:24px;color:var(--gold);font-family:var(--font-kai);letter-spacing:8px;text-shadow:0 0 20px rgba(212,175,55,0.3);}
@@ -323,7 +314,6 @@ body{
 }
 .social-proof{text-align:center;font-size:10px;color:rgba(242,233,208,0.25);}
 
-/* ===== 付费弹窗 ===== */
 .paywall-backdrop{
   display:none;position:fixed;inset:0;
   background:rgba(0,0,0,0.85);z-index:100;
@@ -366,7 +356,6 @@ body{
   border:1px solid rgba(200,121,108,0.2);
 }
 
-/* ===== 支付方式选择弹窗 ===== */
 .payment-backdrop{
   display:none;position:fixed;inset:0;
   background:rgba(0,0,0,0.9);z-index:200;
@@ -399,7 +388,6 @@ body{
 .payment-option-label{color:var(--gold);font-size:14px;letter-spacing:2px;font-weight:600;}
 .payment-option-desc{color:rgba(242,233,208,0.4);font-size:11px;}
 
-/* ===== 二维码弹窗 ===== */
 .qr-backdrop{
   display:none;position:fixed;inset:0;
   background:rgba(0,0,0,0.92);z-index:300;
@@ -448,7 +436,6 @@ body{
 }
 .qr-error{color:#e88;font-size:12px;display:none;}
 
-/* ===== 报告页 ===== */
 .report-scroll{gap:14px;padding-bottom:32px;}
 .report-title{text-align:center;font-size:28px;color:var(--gold);font-family:var(--font-serif);letter-spacing:12px;padding:24px 0 4px;text-shadow:0 0 30px rgba(212,175,55,0.3);}
 .gold-line{width:60px;height:1.5px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:4px auto 22px;}
@@ -465,7 +452,6 @@ body{
 .slip-name{font-size:22px;color:var(--gold);font-family:var(--font-serif);margin:8px 0 16px;letter-spacing:6px;}
 .slip-verse{color:rgba(242,233,208,0.6);line-height:2.3;font-size:14px;font-family:var(--font-kai);}
 
-/* 解锁动画 */
 .seal-animation{
   position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);
   width:90px;height:90px;
@@ -659,7 +645,7 @@ body{
 </div>
 
 <script>
-// ========== ★★★ 后台配置区域 ★★★ ==========
+// ========== ★ 后台配置 ★ ==========
 const PAYMENT_CONFIG = {
   wechat: { name: '微信支付', qrImage: 'wechat-qr.png' },
   alipay: { name: '支付宝', qrImage: 'alipay-qr.png' }
@@ -669,84 +655,40 @@ const VERIFY_CODE = '888888';
 
 let selectedPayment = 'wechat';
 
-// ========== ★★★ 姓名验证系统 ★★★ ==========
-// 正则：纯汉字
+// ========== 姓名验证 ==========
 function isChineseOnly(str) {
-  return /^[\u4e00-\u9fff\u3400-\u4dbf\u{20000}-\u{2a6df}\u{2a700}-\u{2b73f}\u{2b740}-\u{2b81f}\u{2b820}-\u{2ceaf}\u{2ceb0}-\u{2ebef}\u{30000}-\u{3134f}]+$/u.test(str);
+  return /^[\u4e00-\u9fff\u3400-\u4dbf]+$/u.test(str);
 }
 
-// 超大规模黑名单（综合各类校验库常见乱填词）
 const NAME_BLACKLIST = new Set([
-  // === 测试类 ===
-  '测试','测试号','测试员','测试账号','测试名','演示','示例','样例','试用',
-  '未命名','未填写','待填写','无名氏','佚名','匿名','某人','某某','谁谁',
-  '随便','随便填','随便写','随便起','随便取','随意','随意填','乱填','乱写',
-  '不知道','不知道啊','没想好','还没想','未定','待定','暂定','暂时','再说',
-  // === 数字/序数类 ===
+  '测试','未命名','无名氏','佚名','匿名','某人','某某','随便','随意','乱填','乱写',
+  '不知道','没想好','未定','待定','再说',
   '一一','二二','三三','四四','五五','六六','七七','八八','九九','十十',
   '一二','二三','三四','四五','五六','六七','七八','八九','九十',
   '零一','零二','零三','零四','零五','零六','零七','零八','零九',
   '第一','第二','第三','第四','第五','第六','第七','第八','第九','第十',
-  '甲甲','乙乙','丙丙','丁丁','戊戊','己己','庚庚','辛辛','壬壬','癸癸',
-  '子子','丑丑','寅寅','卯卯','辰辰','巳巳','午午','未未','申申','酉酉','戌戌','亥亥',
-  // === 字母类 ===
-  'aaa','bbb','ccc','ddd','eee','fff','ggg','hhh','iii','jjj','kkk','lll','mmm',
-  'nnn','ooo','ppp','qqq','rrr','sss','ttt','uuu','vvv','www','xxx','yyy','zzz',
-  'abc','def','ghi','jkl','mno','pqr','stu','vwx','yz',
-  'abcde','abcde','abcde','test','testa','testb','testc',
-  // === 经典乱填 ===
-  '张三','李四','王五','赵六','孙七','周八','吴九','郑十',
-  '刘一','陈二','杨三','黄四','张三丰','李四海','王五洲',
-  '张三疯','李四光','李四狗','王老五','王老六','赵老七',
-  '小明','小红','小刚','小强','小丽','小芳','小华','小花','小白','小黑',
-  '小明同学','小红花','小霸王','小不点','小家伙','小朋友','小可爱','小宝贝',
-  '帅哥','美女','靓仔','靓女','女神','男神','小仙女','小鲜肉','大帅哥','大美女',
-  '宝宝','宝贝','亲爱的','亲亲','么么','哒哒','摸摸','抱抱','亲亲宝贝',
-  // === 叠字/语气词 ===
-  '哈哈','呵呵','嘻嘻','嘿嘿','吼吼','呼呼','哼哼','嗯嗯','啊啊','哦哦',
-  '啦啦','呀呀','哟哟','嘤嘤','呜呜','噗噗','略略','嘎嘎',
-  '滴答','叮咚','咔嚓','啪嗒','咕噜','哇塞','哎哟','哎呀',
-  // === 动物/植物/物品 ===
-  '小猫','小狗','小猪','小鸡','小鸭','小鱼','小兔','小鸟','小虫',
-  '猫咪','狗狗','兔兔','熊熊','猪猪','虎虎','龙龙','蛇蛇','马马','羊羊',
-  '花花','草草','树树','叶叶','月月','星星','云云','雨雨','雪雪','风风',
-  '米饭','面条','馒头','包子','饺子','火锅','烧烤','奶茶','咖啡','可乐',
-  '手机','电脑','键盘','鼠标','屏幕','耳机','充电器',
-  // === 职业/身份 ===
-  '老师','学生','医生','护士','警察','律师','司机','厨师','工人','农民',
-  '老板','经理','总监','总裁','秘书','会计','出纳','销售','客服','前台',
-  '妈妈','爸爸','爷爷','奶奶','外公','外婆','哥哥','姐姐','弟弟','妹妹',
-  // === 地名/国家 ===
-  '北京','上海','广州','深圳','杭州','南京','成都','重庆','武汉','西安',
-  '中国','美国','日本','韩国','英国','法国','德国','俄国','印度','泰国',
-  // === 网络梗/流行语 ===
-  '老六','卧龙','凤雏','大聪明','显眼包','绝绝子','无语子','暴风吸入',
-  '吃瓜群众','热心网友','路过群众','不知名网友','神秘人','工具人',
-  '打工人','尾款人','干饭人','读书人','考研人','考公人','上岸人',
-  // === 特殊符号组合（即使被过滤半角，也防万一） ===
-  '名字','姓名','称呼','昵称','代号','编号','账号','用户','玩家',
-  '你好','您好','大家好','你们好','早上好','晚上好','午安','晚安',
-  '大家好我','我是你','你是谁','你是谁啊','我不说','你猜啊','你猜猜',
-  '不告诉你','保密','秘密','隐藏','不说','无可奉告',
+  '甲甲','乙乙','丙丙','丁丁','子子','丑丑','寅寅','卯卯',
+  '张三','李四','王五','赵六','孙七','周八','小名','小红','小刚','小强','小丽','小芳','小花',
+  '帅哥','美女','靓仔','女神','男神','宝宝','宝贝','亲爱的',
+  '哈哈','呵呵','嘻嘻','嘿嘿','嗯嗯','啊啊','哦哦','啦啦','嘤嘤','呜呜',
+  '小猫','小狗','猫咪','狗狗','兔兔','熊熊','花花','草草','米饭','奶茶',
+  '老师','学生','医生','护士','爸爸','妈妈','爷爷','奶奶','哥哥','姐姐','弟弟','妹妹',
+  '北京','上海','广州','深圳','中国','美国','日本','韩国',
+  '老六','打工人','工具人','吃瓜群众','热心网友',
+  '名字','姓名','昵称','代号','账号','用户',
+  '你好','您好','大家好','晚安','保密','不说',
 ]);
 
 function isValidName(name) {
-  // 1. 必须是纯汉字
   if (!isChineseOnly(name)) return false;
-  // 2. 长度必须是2~4
   if (name.length < 2 || name.length > 4) return false;
-  // 3. 不在黑名单中
   if (NAME_BLACKLIST.has(name)) return false;
-  // 4. 不能是全叠字（如「哈哈」「一一」）
   if (name.length === 2 && name[0] === name[1]) return false;
-  // 5. 不能是3字以上全相同（如「哈哈哈」「一一一」）
   if (name.length >= 3 && new Set(name.split('')).size === 1) return false;
-  // 6. 不能包含数字/字母/标点混入
-  if (/[^\\u4e00-\\u9fff\\u3400-\\u4dbf]/.test(name)) return false;
   return true;
 }
 
-// ========== 星空 & 云雾 ==========
+// ========== 背景动画 ==========
 (function(){
   const stars = document.getElementById('starsLayer');
   for(let i=0;i<55;i++){
@@ -806,22 +748,17 @@ function showScreen(id){
   if(t) t.classList.add('active');
 }
 
-// ========== 输入验证 + 开始测算 ==========
+// ========== ★ 核心：输入验证 + 开始测算 ★ ==========
 function startDivination(){
   const myName = document.getElementById('myName').value.trim();
   const taName = document.getElementById('taName').value.trim();
 
+  if (!myName && !taName) { showToast('请输入双方的姓名'); return; }
   if (!myName) { showToast('请输入您的名字'); return; }
-  if (!taName) { showToast('请输入TA的名字'); return; }
+  if (!taName) { showToast('请输入TA的姓名'); return; }
 
-  if (!isValidName(myName)) {
-    showToast('请输入正确的姓名');
-    return;
-  }
-  if (!isValidName(taName)) {
-    showToast('请输入正确的姓名');
-    return;
-  }
+  if (!isValidName(myName)) { showToast('请输入正确的姓名'); return; }
+  if (!isValidName(taName)) { showToast('请输入正确的姓名'); return; }
 
   document.getElementById('rMyName').textContent = myName;
   document.getElementById('rTaName').textContent = taName;
@@ -848,7 +785,7 @@ function openPaywall(){document.getElementById('paywallBackdrop').classList.add(
 function closePaywall(){document.getElementById('paywallBackdrop').classList.remove('active');}
 document.getElementById('paywallBackdrop').addEventListener('click',function(e){if(e.target===this)closePaywall();});
 
-// ========== 支付方式选择 ==========
+// ========== 支付选择 ==========
 function openPaymentSelect(){
   closePaywall();
   document.getElementById('paymentBackdrop').classList.add('active');
@@ -880,11 +817,7 @@ function confirmPayment(){
 // ========== 二维码弹窗 ==========
 function closeQR(){document.getElementById('qrBackdrop').classList.remove('active');}
 document.getElementById('qrBackdrop').addEventListener('click',function(e){if(e.target===this)closeQR();});
-
-function goBackToPaymentSelect(){
-  closeQR();
-  openPaymentSelect();
-}
+function goBackToPaymentSelect(){closeQR();openPaymentSelect();}
 
 // ========== 验证解锁 ==========
 function verifyAndUnlock(){
