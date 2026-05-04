@@ -8,7 +8,7 @@
 :root{--bg-deep:#0C0B1A;--gold:#D4AF37;--paper:#F2E9D0;--cinnabar:#C8796C;--rose:#F0C0C8;--card-bg:rgba(22,21,45,0.65);--card-border:rgba(212,175,55,0.2);--glass-blur:blur(28px);--radius-lg:20px;--radius-md:14px;--font-serif:'STSong','Songti SC','Noto Serif SC','SimSun',serif;--font-kai:'STKaiti','KaiTi SC','KaiTi',serif;--font-sans:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif}
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--bg-deep);font-family:var(--font-sans);display:flex;justify-content:center;align-items:center;min-height:100vh;min-height:100dvh;color:var(--paper);overflow-x:hidden;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
-.app{width:100%;max-width:420px;min-height:100vh;min-height:100dvh;background:radial-gradient(ellipse at 50% 6%,#1a1835 0%,#0C0B1A 50%);position:relative;display:flex;flex-direction:column}
+.app{width:100%;max-width:420px;min-height:100vh;min-height:100dvh;background:transparent;position:relative;display:flex;flex-direction:column;z-index:1}
 .stars-layer{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
 .star-particle{position:absolute;background:var(--gold);border-radius:50%;animation:starRise linear infinite;opacity:0}
 @keyframes starRise{0%{transform:translateY(105vh) scale(0.3);opacity:0}8%{opacity:1}85%{opacity:0.2}100%{transform:translateY(-15vh) scale(1.5);opacity:0}}
@@ -159,6 +159,9 @@ body{background:var(--bg-deep);font-family:var(--font-sans);display:flex;justify
 </style>
 </head>
 <body>
+<!-- 剑来水墨粒子背景画布 -->
+<canvas id="jianlaiBg" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;"></canvas>
+
 <div class="app" id="appRoot">
 <div class="stars-layer" id="starsLayer"></div>
 <div class="clouds-layer" id="cloudsLayer"></div>
@@ -198,7 +201,6 @@ const PAYMENT_CONFIG={wechat:{name:'微信支付',qrImage:'wechat-qr.png'},alipa
 function isCodeUsed(c){var a=JSON.parse(localStorage.getItem('hehun_used_list')||'[]');return a.indexOf(c)!==-1}
 function markCodeUsed(c){var a=JSON.parse(localStorage.getItem('hehun_used_list')||'[]');a.push(c);localStorage.setItem('hehun_used_list',JSON.stringify(a))}
 
-// ===== 递进式锁定 =====
 function getLockMinutes(l){if(l===1)return 3;if(l===2)return 6;return 10}
 let tryCount=0,lockLevel=0,lockUntil=0;
 
@@ -218,12 +220,21 @@ if(tryCount>=5){lockLevel++;var lm=getLockMinutes(lockLevel);lockUntil=now+lm*60
 }
 
 function isChineseOnly(s){return /^[\u4e00-\u9fff\u3400-\u4dbf]+$/u.test(s)}
-var BLACKLIST=new Set(['测试','未命名','无名氏','佚名','匿名','某人','某某','随便','一一','张三','李四','王五','赵六','小名','小红','哈哈','呵呵','嗯嗯','啊啊','小猫','小狗','米饭','奶茶','北京','上海','你好','保密']);
-function isValidName(n){if(!isChineseOnly(n))return false;if(n.length<2||n.length>4)return false;if(BLACKLIST.has(n))return false;if(n.length===2&&n[0]===n[1])return false;return true}
+var BLACKLIST=new Set(['测试','测试号','测试员','测试账号','测试名','演示','示例','样例','试用','试用号','未命名','未填写','待填写','无名氏','佚名','匿名','某人','某某','谁谁','何人','路人','随便','随便填','随便写','随便起','随便取','随意','随意填','乱填','乱写','乱打','不知道','不知道啊','没想好','还没想','未定','待定','暂定','暂时','再说','不管了','名字','姓名','称呼','昵称','代号','编号','账号','用户','玩家','游客','访客','我是','我在','是我','你是','他是','她是','我是谁','你是谁','谁是我','谁是你','我叫','我叫啥','叫啥','叫什么','叫啥名','啥名','啥名字','啥玩意','是什么','一一','二二','三三','四四','五五','六六','七七','八八','九九','十十','零零','一二','二三','三四','四五','五六','六七','七八','八九','九十','十一','十二','零一','零二','零三','零四','零五','零六','零七','零八','零九','零十','第一','第二','第三','第四','第五','第六','第七','第八','第九','第十','甲甲','乙乙','丙丙','丁丁','戊戊','己己','庚庚','辛辛','壬壬','癸癸','子子','丑丑','寅寅','卯卯','辰辰','巳巳','午午','未未','申申','酉酉','戌戌','亥亥','张三','李四','王五','赵六','孙七','周八','吴九','郑十','刘一','陈二','杨三','黄四','林五','何六','郭七','马八','罗九','梁十','张三丰','李四海','王五洲','赵六子','孙七郎','周八皮','张三疯','李四光','李四狗','王老五','王老六','赵老七','刘小八','陈小九','小明','小红','小刚','小强','小丽','小芳','小华','小花','小白','小黑','小蓝','小绿','小明同学','小红花','小霸王','小不点','小家伙','小朋友','小可爱','小宝贝','小仙女','小王子','阿明','阿红','阿刚','阿强','阿丽','阿芳','阿华','阿花','阿白','阿黑','哈哈','呵呵','嘻嘻','嘿嘿','吼吼','呼呼','哼哼','嗯嗯','啊啊','哦哦','嗯呐','嗯哪','啦啦','呀呀','哟哟','嘤嘤','呜呜','噗噗','略略','嘎嘎','咔咔','嗒嗒','嘟嘟','咕咕','滴答','叮咚','咔嚓','啪嗒','咕噜','哇塞','哎哟','哎呀','哇呀','噗嗤','嗨嗨','嘿嘿嘿','呵呵呵','哈哈哈','嘻嘻嘻','呜呜呜','嗷嗷','哇哇','小猫','小狗','小猪','小鸡','小鸭','小鱼','小兔','小鸟','小虫','小虾','小蟹','小蛇','猫咪','狗狗','兔兔','熊熊','猪猪','虎虎','龙龙','蛇蛇','马马','羊羊','牛牛','猴猴','花花','草草','树树','叶叶','月月','星星','云云','雨雨','雪雪','风风','雷雷','电电','米饭','面条','馒头','包子','饺子','火锅','烧烤','奶茶','咖啡','可乐','雪碧','果汁','手机','电脑','键盘','鼠标','屏幕','耳机','充电器','数据线','路由器','音箱','老师','学生','医生','护士','警察','律师','司机','厨师','工人','农民','军人','商人','老板','经理','总监','总裁','秘书','会计','出纳','销售','客服','前台','后勤','保安','妈妈','爸爸','爷爷','奶奶','外公','外婆','哥哥','姐姐','弟弟','妹妹','叔叔','阿姨','北京','上海','广州','深圳','杭州','南京','成都','重庆','武汉','西安','天津','苏州','中国','美国','日本','韩国','英国','法国','德国','俄国','印度','泰国','越南','巴西','老六','卧龙','凤雏','大聪明','显眼包','绝绝子','无语子','暴风吸入','吃瓜群众','热心网友','路过群众','不知名网友','神秘人','工具人','打工人','尾款人','干饭人','读书人','考研人','考公人','上岸人','社畜','内卷','躺平','摆烂','摸鱼','划水','搬砖','吃土','剁手','种草','拔草','你好','您好','大家好','你们好','早上好','晚上好','午安','晚安','早安','再见','你好啊','在吗','在不在','有人在吗','哈喽','嗨喽','嗨','哈罗','不告诉你','保密','秘密','隐藏','不说','无可奉告','你猜','你猜猜','猜猜看','你猜啊','就不说','不想说','不说可以吗','不说了','免谈','不说行吗','猜一猜','打我','骂我','吃我','爱我','恨我','找我','问我','看我','听我','教我','打你','骂你','吃你','爱你','恨你','找你','问你','看你','听你','教你','空白','空格','无','没有','暂无','暂时没有','还没起','没起名','无名人','test','admin','root','user','guest','hello','world','demo','sample','abc','def','ghi','jkl','mno','pqr','stu','vwx','xyz','随便看','看看看','测测','试试','玩玩','路过','飘过','闪过','飞过','游过','看一下','试一下','测一测','试一试','玩一玩','瞧一瞧','看一看','瞅瞅']);
+function isValidName(n){
+if(!isChineseOnly(n))return false;
+if(n.length<2||n.length>4)return false;
+if(BLACKLIST.has(n))return false;
+if(n.length===2&&n[0]===n[1])return false;
+if(n.length>=3&&new Set(n.split('')).size===1)return false;
+if(/^[你我他它是这那谁]+[啊呀嘛呢吧吗了]$/.test(n))return false;
+return true}
+
 (function(){var s=document.getElementById('starsLayer');for(var i=0;i<55;i++){var d=document.createElement('div');d.className='star-particle';d.style.cssText='left:'+Math.random()*100+'%;width:'+(1+Math.random()*3)+'px;height:'+d.style.width+';animation-delay:'+Math.random()*12+'s;animation-duration:'+(6+Math.random()*14)+'s;';s.appendChild(d)}
 var c=document.getElementById('cloudsLayer');for(var i=0;i<8;i++){var d=document.createElement('div');d.className='cloud';d.style.cssText='top:'+(10+Math.random()*70)+'%;left:'+Math.random()*100+'%;width:'+(80+Math.random()*120)+'px;height:'+(25+Math.random()*35)+'px;animation-delay:'+Math.random()*20+'s;animation-duration:'+(25+Math.random()*35)+'s;';c.appendChild(d)}
 var p=document.getElementById('petalsLayer');var e=['🌸','💮','🏵️','🌺','🌷','✿','❀'];for(var i=0;i<12;i++){var d=document.createElement('div');d.className='petal';d.textContent=e[Math.floor(Math.random()*e.length)];d.style.cssText='left:'+Math.random()*100+'%;font-size:'+(14+Math.random()*18)+'px;animation-delay:'+Math.random()*8+'s;animation-duration:'+(6+Math.random()*10)+'s;';p.appendChild(d)}})();
 (function(){var c=document.getElementById('loadingParticles');if(c)for(var i=0;i<20;i++){var d=document.createElement('div');d.className='loading-particle';d.style.cssText='left:'+Math.random()*100+'%;animation-delay:'+Math.random()*2+'s;';c.appendChild(d)}})();
+
 var cy=new Date().getFullYear(),dy=Math.min(1995,cy);
 function populateSelect(id,s,e,d){var sel=document.getElementById(id);sel.innerHTML='';for(var v=s;v<=e;v++){var o=document.createElement('option');o.value=v;o.textContent=v;if(v===d)o.selected=true;sel.appendChild(o)}}
 populateSelect('myYear',1985,cy,dy);populateSelect('myMonth',1,12,6);populateSelect('myDay',1,31,15);
@@ -253,6 +264,69 @@ document.getElementById('qrBackdrop').addEventListener('click',function(e){if(e.
 function goBackToPaymentSelect(){closeQR();openPaymentSelect()}
 function saveReport(){showToast('报告已保存（演示版）')}
 function goBackToResult(){showScreen('Result')}
+
+// ===== 剑来水墨粒子背景特效 =====
+(function(){
+var canvas=document.getElementById('jianlaiBg');
+if(!canvas)return;
+var ctx=canvas.getContext('2d');
+var width,height,particles=[];
+
+function Particle(){
+this.x=Math.random()*width;
+this.y=Math.random()*height;
+this.vx=(Math.random()-0.5)*0.3;
+this.vy=(Math.random()-0.8)*0.5;
+this.size=Math.random()*2.5+0.5;
+this.opacity=Math.random()*0.4+0.1;
+this.life=Math.random()*300+100;
+this.maxLife=this.life;
+}
+
+Particle.prototype.update=function(){
+this.x+=this.vx;
+this.y+=this.vy;
+this.life-=0.5;
+if(this.life<=0||this.y<-10||this.x<-10||this.x>width+10){
+this.x=Math.random()*width;
+this.y=height+10;
+this.life=this.maxLife;
+}
+};
+
+Particle.prototype.draw=function(){
+var alpha=(this.life/this.maxLife)*this.opacity;
+ctx.beginPath();
+ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
+ctx.fillStyle='rgba(180,160,120,'+alpha+')';
+ctx.shadowColor='rgba(200,180,140,0.2)';
+ctx.shadowBlur=this.size*2;
+ctx.fill();
+ctx.shadowBlur=0;
+};
+
+function resize(){
+width=window.innerWidth;
+height=window.innerHeight;
+canvas.width=width;
+canvas.height=height;
+}
+
+function createParticles(count){
+for(var i=0;i<count;i++){particles.push(new Particle())}
+}
+
+function animate(){
+ctx.clearRect(0,0,width,height);
+for(var i=0;i<particles.length;i++){particles[i].update();particles[i].draw()}
+requestAnimationFrame(animate);
+}
+
+resize();
+createParticles(80);
+animate();
+window.addEventListener('resize',resize);
+})();
 </script>
 </body>
-  </html>
+</html>
