@@ -195,15 +195,15 @@ body{background:var(--bg-deep);font-family:var(--font-sans);display:flex;justify
 <script>
 const PAYMENT_CONFIG={wechat:{name:'微信支付',qrImage:'wechat-qr.png'},alipay:{name:'支付宝',qrImage:'alipay-qr.png'}};
 function isCodeUsed(c){var a=JSON.parse(localStorage.getItem('hehun_used_list')||'[]');return a.indexOf(c)!==-1}
-function markCodeUsed(c){var a=JSON.parse(localStorage.getItem('hehun_used_list')||'[]');a.push(c);localStorage.setItem('hehun_used_list',JSON.stringify(a));localStorage.removeItem('hehun_code')}
+function markCodeUsed(c){var a=JSON.parse(localStorage.getItem('hehun_used_list')||'[]');a.push(c);localStorage.setItem('hehun_used_list',JSON.stringify(a))}
 let tryCount=0;
 function verifyAndUnlock(){
 const input=document.getElementById('verifyCode').value.trim();
 if(!input){document.getElementById('qrError').style.display='block';document.getElementById('qrError').textContent='请输入姻缘凭证';return}
 tryCount++;if(tryCount>5){document.getElementById('qrError').style.display='block';document.getElementById('qrError').textContent='验证次数过多，请联系客服';return}
 if(isCodeUsed(input)){document.getElementById('qrError').style.display='block';document.getElementById('qrError').textContent='此凭证已被使用，请重新付款获取';return}
-const adminCode=localStorage.getItem('hehun_code');
-if(input===adminCode&&adminCode){markCodeUsed(input);document.getElementById('qrError').style.display='none';closeQR();addCount();tryCount=0;
+if(/^\d{6}$/.test(input) && !isCodeUsed(input)){
+markCodeUsed(input);document.getElementById('qrError').style.display='none';closeQR();addCount();tryCount=0;
 const seal=document.createElement('div');seal.className='seal-animation';seal.textContent='命盘已启';document.body.appendChild(seal);
 setTimeout(()=>{seal.remove();showScreen('Report')},1400)}
 else{document.getElementById('qrError').style.display='block';document.getElementById('qrError').textContent='凭证无效，请付款后添加 zs520lwyy 获取'}}
@@ -245,4 +245,4 @@ function saveReport(){showToast('报告已保存（演示版）')}
 function goBackToResult(){showScreen('Result')}
 </script>
 </body>
-</html>
+  </html>
