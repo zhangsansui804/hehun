@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>后台 · 一次性验证码</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0C0B1A;color:#F2E9D0;font-family:'PingFang SC','Hiragino Sans GB',sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;flex-direction:column;overflow:hidden;}
+.stars{position:fixed;inset:0;pointer-events:none;}
+.star{position:absolute;background:#D4AF37;border-radius:50%;animation:twinkle linear infinite;opacity:0;}
+@keyframes twinkle{0%{opacity:0;transform:scale(0.5)}50%{opacity:0.8;transform:scale(1.2)}100%{opacity:0;transform:scale(0.5)}}
+h1{color:#D4AF37;font-size:20px;letter-spacing:6px;margin-bottom:10px;}
+.code-box{background:rgba(22,21,45,0.8);border:2px solid rgba(212,175,55,0.3);border-radius:20px;padding:40px 30px;backdrop-filter:blur(20px);margin:20px 0;}
+.code-label{color:rgba(242,233,208,0.5);font-size:12px;letter-spacing:4px;margin-bottom:12px;}
+.code-value{font-size:52px;letter-spacing:18px;color:#F2E9D0;font-weight:900;}
+.info-text{color:rgba(242,233,208,0.5);font-size:13px;margin-bottom:20px;line-height:1.8;}
+.btn{background:#C8796C;color:#fff;border:none;padding:14px 30px;border-radius:24px;font-size:15px;letter-spacing:3px;cursor:pointer;box-shadow:0 6px 20px rgba(200,121,108,0.35);}
+.btn:active{transform:scale(0.96);}
+.used-list{max-width:320px;margin:0 auto;}
+.used-title{color:rgba(242,233,208,0.4);font-size:12px;letter-spacing:2px;margin:30px 0 8px;}
+.used-code{color:rgba(242,233,208,0.2);font-size:11px;text-decoration:line-through;margin:2px 0;}
+</style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+<h1>🔒 一次性验证码</h1>
+<p class="info-text">每个验证码仅可使用一次<br>用户付款后，你点击「生成新码」发给用户</p>
+<div class="code-box"><div class="code-label">当前有效验证码</div><div class="code-value" id="code">------</div></div>
+<button class="btn" onclick="generateNew()">🔄 生成新码</button>
+<div class="used-list"><div class="used-title">已使用过的验证码：</div><div id="usedList"></div></div>
+<script>
+(function(){const stars=document.getElementById('stars');for(let i=0;i<30;i++){const s=document.createElement('div');s.className='star';s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;width:2px;height:2px;animation-delay:${Math.random()*4}s;animation-duration:${2+Math.random()*4}s;`;stars.appendChild(s);}})();
+function getCurrentCode(){return localStorage.getItem('admin_current_code');}
+function setCurrentCode(c){localStorage.setItem('admin_current_code',c);}
+function getUsedCodes(){return JSON.parse(localStorage.getItem('admin_used_codes')||'[]');}
+function addUsedCode(c){const arr=getUsedCodes();arr.push(c);if(arr.length>30)arr.shift();localStorage.setItem('admin_used_codes',JSON.stringify(arr));}
+function displayCode(){document.getElementById('code').textContent=getCurrentCode()||'------';renderUsed();}
+function generateNew(){const c=String(Math.floor(100000+Math.random()*900000));setCurrentCode(c);displayCode();}
+function renderUsed(){const codes=getUsedCodes();document.getElementById('usedList').innerHTML=codes.length===0?'<span style="color:rgba(242,233,208,0.2);">暂无</span>':codes.slice().reverse().map(c=>'<div class="used-code">'+c+'</div>').join('');}
+displayCode();if(!getCurrentCode()){generateNew();}
+</script>
+</body>
+</html>
