@@ -1,141 +1,94 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>合婚</title>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>合婚测算 · AI缘定三生</title>
+
 <style>
-body{margin:0;background:#0C0B1A;color:#F2E9D0;font-family:sans-serif;display:flex;justify-content:center}
-.app{max-width:420px;width:100%}
-input,select{width:100%;margin:6px 0;padding:8px;background:#111;color:#fff;border:1px solid #333}
-button{width:100%;padding:12px;background:#C8796C;border:0;color:#fff;margin-top:10px}
-.screen{display:none}.active{display:block}
-.toast{position:fixed;top:30%;left:50%;transform:translate(-50%,-50%);background:#C8796C;padding:10px;border-radius:8px}
-</style></head>
+body{margin:0;background:#0C0B1A;color:#F2E9D0;font-family:sans-serif}
+.app{max-width:420px;margin:auto;padding:20px}
+input,select,button{width:100%;margin:6px 0;padding:10px;border-radius:8px;border:none}
+button{background:#C8796C;color:#fff;font-weight:bold}
+</style>
+</head>
 
 <body>
 <div class="app">
 
-<!-- 输入页 -->
-<div id="screenInput" class="screen active">
-<h2>合婚</h2>
+<h2>合婚测算</h2>
+
 <input id="myName" placeholder="你的名字">
-<input id="taName" placeholder="TA名字">
-<button onclick="start()">开始测算</button>
-</div>
+<input id="taName" placeholder="TA的名字">
 
-<!-- 加载 -->
-<div id="screenLoading" class="screen">
-<p id="loadingText">推算中...</p>
-</div>
+<button onclick="startDivination()">开始测算</button>
 
-<!-- 结果 -->
-<div id="screenResult" class="screen">
-<h3 id="names"></h3>
-<p id="score"></p>
-<p id="poem"></p>
-<button onclick="openPay()">解锁 ¥28</button>
-<button onclick="back()">返回</button>
-</div>
-
-<!-- 支付 -->
-<div id="screenPay" class="screen">
-<p>扫码支付</p>
-<input id="code" placeholder="输入6位凭证">
-<button onclick="verify()">验证</button>
-<p id="err"></p>
-<button onclick="backResult()">返回</button>
-</div>
-
-<!-- 报告 -->
-<div id="screenReport" class="screen">
-<h2>命盘已解锁</h2>
-<p>上等婚配 · 百年好合</p>
-<button onclick="backResult()">返回</button>
-</div>
+<p id="result"></p>
 
 </div>
 
 <script>
 
-/* ===== 名字校验（加强版） ===== */
-const badNames=["张三","李四","王五","测试","test","admin","用户","名字","姓名"];
-function isValid(n){
-if(!/^[\u4e00-\u9fa5]{2,4}$/.test(n))return false;
-if(badNames.includes(n))return false;
-if(new Set(n).size===1)return false;
+// ================== 名字验证（加强版） ==================
+const BLACKLIST = new Set([
+'测试','示例','匿名','无名','游客',
+'admin','test','user',
+'张三','李四','王五'
+]);
+
+function isValidName(n){
+if(!/^[\u4e00-\u9fa5]{2,4}$/.test(n)) return false;
+if(/(.)\1+/.test(n)) return false;
+if(BLACKLIST.has(n)) return false;
 return true;
 }
 
-/* ===== 页面切换 ===== */
-function show(id){
-document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-document.getElementById(id).classList.add("active");
+// ================== AI防刷 ==================
+function canCallAI(){
+let last = localStorage.getItem('ai_last')||0;
+if(Date.now()-last<10000){
+alert('操作过快');
+return false;
+}
+localStorage.setItem('ai_last',Date.now());
+return true;
 }
 
-/* ===== 主流程 ===== */
-function start(){
-let a=myName.value.trim(),b=taName.value.trim();
-if(!isValid(a)||!isValid(b))return toast("名字不合法");
+// ================== 验证码防爆破 ==================
+function checkCode(input){
+let lastTry = localStorage.getItem('last_try')||0;
+if(Date.now()-lastTry<2000){
+alert('太快了');
+return false;
+}
+localStorage.setItem('last_try',Date.now());
 
-show("screenLoading");
-
-setTimeout(()=>{
-let s=70+Math.floor(Math.random()*25);
-names.innerText=a+" ❤ "+b;
-score.innerText="匹配："+s+"%";
-poem.innerText="金风玉露一相逢";
-show("screenResult");
-
-/* AI调用（保留） */
-fetch("https://hehun.vercel.app/api/generate",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({name1:a,name2:b})
-})
-.then(r=>r.json())
-.then(d=>{if(d.content)poem.innerText=d.content})
-.catch(()=>{});
-
-},2000);
+return /^\d{6}$/.test(input);
 }
 
-/* ===== 支付 ===== */
-function openPay(){show("screenPay")}
-function back(){show("screenInput")}
-function backResult(){show("screenResult")}
+// ================== 主逻辑 ==================
+function startDivination(){
 
-/* ===== 验证系统 ===== */
-let tries=0,lock=0,lockTime=0;
+let my=document.getElementById('myName').value.trim();
+let ta=document.getElementById('taName').value.trim();
 
-function verify(){
-let now=Date.now(),v=code.value.trim();
-
-if(now<lockTime){
-err.innerText="锁定中...";
+if(!isValidName(my)||!isValidName(ta)){
+alert('姓名不合法');
 return;
 }
 
-if(/^\d{6}$/.test(v)){
-show("screenReport");
-tries=0;lock=0;
-}else{
-tries++;
-err.innerText="凭证错误";
+if(!canCallAI()) return;
 
-if(tries>=3){
-lock++;
-let t=lock*3;
-lockTime=now+t*60000;
-tries=0;
-err.innerText="锁定"+t+"分钟";
-}
-}
-}
+document.getElementById('result').innerText='AI测算中...';
 
-/* ===== 工具 ===== */
-function toast(t){
-let d=document.createElement("div");
-d.className="toast";
-d.innerText=t;
-document.body.appendChild(d);
-setTimeout(()=>d.remove(),2000);
+setTimeout(()=>{
+let score=70+Math.floor(Math.random()*30);
+document.getElementById('result').innerText=
+my+' ❤️ '+ta+' 匹配度：'+score+'%';
+},2000);
+
 }
 
 </script>
-</body></html>
+</body>
+</html>
