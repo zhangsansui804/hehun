@@ -80,10 +80,11 @@ body{background:var(--bg-deep);font-family:var(--font-sans);display:flex;justify
 @keyframes breathe{0%,100%{opacity:0.3}50%{opacity:1}}
 .loading-text{color:rgba(242,233,208,0.7);font-size:15px;letter-spacing:4px;margin-bottom:12px;min-height:22px}
 .loading-sub{color:rgba(242,233,208,0.25);font-size:12px;letter-spacing:2px}
-.result-header{text-align:center;padding:28px 0 10px}
+.result-header{text-align:center;padding:28px 0 10px;position:relative}
 .name-row{display:flex;justify-content:center;align-items:center;gap:16px}
 .name-col{font-size:24px;color:var(--gold);font-family:var(--font-kai);letter-spacing:8px;text-shadow:0 0 20px rgba(212,175,55,0.3)}
 .seal-box{width:50px;height:50px;border:2px solid var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--gold);font-family:var(--font-serif);background:rgba(212,175,55,0.06);box-shadow:0 0 20px rgba(212,175,55,0.2)}
+.result-back-btn{position:absolute;top:10px;left:0;color:rgba(212,175,55,0.7);font-size:16px;cursor:pointer;z-index:10;letter-spacing:2px}
 .result-subtitle{font-size:11px;color:rgba(242,233,208,0.35);margin-top:10px;letter-spacing:4px}
 .verdict-title{text-align:center;font-size:26px;color:var(--gold);font-family:var(--font-serif);letter-spacing:4px;margin-bottom:6px;text-shadow:0 0 20px rgba(212,175,55,0.2)}
 .verdict-poem{text-align:center;font-size:12px;color:rgba(242,233,208,0.45);line-height:1.9}
@@ -156,12 +157,12 @@ body{background:var(--bg-deep);font-family:var(--font-sans);display:flex;justify
 .slip-verse{color:rgba(242,233,208,0.6);line-height:2.3}
 .seal-animation{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);width:90px;height:90px;background:rgba(200,121,108,0.95);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:36px;color:#FFF8E7;z-index:999;pointer-events:none;animation:sealPop 1.4s forwards}
 @keyframes sealPop{0%{transform:translate(-50%,-50%) scale(0) rotate(-45deg)}50%{transform:translate(-50%,-50%) scale(1.4)}100%{transform:translate(-50%,-50%) scale(1.8);opacity:0}}
+.style-tag{display:inline-block;background:rgba(212,175,55,0.15);color:var(--gold);padding:6px 14px;border-radius:16px;font-size:12px;cursor:pointer;margin:4px;transition:all 0.2s}
+.style-tag.active{background:rgba(212,175,55,0.4);color:#fff}
 </style>
 </head>
 <body>
-<!-- 剑来水墨粒子背景画布 -->
 <canvas id="jianlaiBg" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;"></canvas>
-
 <div class="app" id="appRoot">
 <div class="stars-layer" id="starsLayer"></div>
 <div class="clouds-layer" id="cloudsLayer"></div>
@@ -174,6 +175,13 @@ body{background:var(--bg-deep);font-family:var(--font-sans);display:flex;justify
 <div class="person-card"><h3>我</h3><input type="text" id="myName" placeholder="闺 名" maxlength="6"><select id="myGender"><option value="女">女</option><option value="男">男</option></select><div class="birth-row"><select id="myYear"></select><select id="myMonth"></select><select id="myDay"></select></div></div>
 <div class="person-card"><h3>TA</h3><input type="text" id="taName" placeholder="姓 名" maxlength="6"><select id="taGender"><option value="男">男</option><option value="女">女</option></select><div class="birth-row"><select id="taYear"></select><select id="taMonth"></select><select id="taDay"></select></div></div>
 </div>
+<div style="display:flex;justify-content:center;gap:6px;margin:8px 0;flex-wrap:wrap;" id="styleTags">
+<span class="style-tag active" onclick="setStyle('古风典雅',this)">🏮 古风典雅</span>
+<span class="style-tag" onclick="setStyle('搞笑吐槽',this)">😄 搞笑吐槽</span>
+<span class="style-tag" onclick="setStyle('甜宠告白',this)">💖 甜宠告白</span>
+<span class="style-tag" onclick="setStyle('命运羁绊',this)">🔗 命运羁绊</span>
+</div>
+<div id="selectedStyle" style="text-align:center;color:var(--rose);font-size:12px;margin-bottom:4px;">当前风格：古风典雅</div>
 <button class="btn btn-primary" onclick="startDivination()">问 天 机</button>
 <div class="trust-bar">🔒 已为 <span id="counter">128,934</span> 对有缘人合盘</div>
 <div class="history-btn" onclick="showHistory()">📜 查看历史记录</div>
@@ -181,8 +189,8 @@ body{background:var(--bg-deep);font-family:var(--font-sans);display:flex;justify
 <div class="screen loading-screen" id="screenLoading"><div class="loading-particles" id="loadingParticles"></div><div class="ring-container"><div class="ring-outer"></div><div class="ring-middle"></div><div class="ring-inner"><div class="taiji"></div></div></div><div class="loading-text" id="loadingMsg">正在合你二人八字…</div><div class="loading-sub">命理推算需诚心以待</div></div>
 <div class="screen" id="screenResult">
 <div style="flex:1;">
-<div class="result-header"><div class="name-row"><span class="name-col" id="rMyName"></span><div class="seal-box">合</div><span class="name-col" id="rTaName"></span></div><div class="result-subtitle">八字合婚 · 天机初现</div></div>
-<div class="glass-card"><div class="verdict-title" id="verdictText"></div><div class="verdict-poem">金风玉露一相逢，便胜却人间无数</div></div>
+<div class="result-header"><div class="result-back-btn" onclick="showScreen('Input')">← 返回</div><div class="name-row"><span class="name-col" id="rMyName"></span><div class="seal-box">合</div><span class="name-col" id="rTaName"></span></div><div class="result-subtitle">八字合婚 · 天机初现</div></div>
+<div class="glass-card"><div class="verdict-title" id="verdictText"></div><div class="verdict-poem" id="verdictPoem">金风玉露一相逢，便胜却人间无数</div></div>
 <div class="metrics-row"><div class="metric-cell"><div class="metric-value" id="matchScore"></div><div class="metric-label">五行匹配</div></div><div class="metric-cell"><div class="metric-value">☯</div><div class="metric-label">阴阳调和</div></div><div class="metric-cell"><div class="metric-value">吉</div><div class="metric-label">近期运势</div></div></div>
 <div class="locked-card" onclick="openPaywall()"><div class="locked-preview">四柱详批：乾造甲□ 乙□ 丙□ 丁□…</div><div class="lock-icon">🔒</div></div>
 <div class="locked-card" onclick="openPaywall()"><div class="locked-preview">婚期择吉：宜在 202□ 年…</div><div class="lock-icon">🔒</div></div>
@@ -193,7 +201,7 @@ body{background:var(--bg-deep);font-family:var(--font-sans);display:flex;justify
 <div class="screen" id="screenReport"><div class="report-screen-bg"><div class="bg-circle"></div><div class="bg-circle"></div><div class="bg-circle"></div></div><div class="report-scroll"><div class="report-title">合 婚 命 盘</div><div class="gold-line"></div><div class="glass-card"><div class="verdict-title" id="rpVerdict"></div><p style="text-align:center;font-size:12px;color:rgba(242,233,208,0.45);">互为喜用 · 上等婚配</p></div><div class="glass-card"><div class="section-title">四柱八字合盘</div><div class="table-row"><span>乾造（男）</span><span>甲子 · 乙丑 · 丙寅 · 丁卯</span></div><div class="table-row"><span>坤造（女）</span><span>癸亥 · 庚申 · 丁巳 · 壬午</span></div></div><div class="glass-card"><div class="section-title">大运婚运流年</div><div class="chart-bars"><div class="chart-bar" style="height:45%"><span>23</span></div><div class="chart-bar" style="height:52%"><span>24</span></div><div class="chart-bar highlight" style="height:85%"><span>26★</span></div></div></div><div class="glass-card"><div class="section-title">专属化解建议</div><div class="section-text">💧 共养鱼缸·🪨 置黑曜石·🌿 春季订婚</div></div><div class="fortune-slip"><div class="slip-number">第五十八签</div><div class="slip-name">比翼连枝</div><div class="slip-verse">在天愿作比翼鸟<br>在地愿为连理枝</div></div><div style="text-align:left;padding:8px 0;cursor:pointer;color:#D4AF37;" onclick="goBackToResult()">← 返回</div><button class="btn btn-outline" onclick="saveReport()">保 存 报 告</button></div></div>
 </div>
 <div class="history-backdrop" id="historyBackdrop"><div class="history-sheet"><div class="history-title">📜 历史记录</div><div id="historyList"></div><div class="history-close" onclick="closeHistory()">关闭</div></div></div>
-<div class="paywall-backdrop" id="paywallBackdrop"><div class="paywall-sheet"><div class="paywall-close" onclick="closePaywall()">✕</div><div class="paywall-headline">此段姻缘，天机未尽</div><div class="benefit-list"><div class="benefit-item"><span class="benefit-icon">🏮</span> 双方四柱八字合盘详解</div><div class="benefit-item"><span class="benefit-icon">🏮</span> 前世缘分与今生课题</div><div class="benefit-item"><span class="benefit-icon">🏮</span> 最佳婚期择吉</div><div class="benefit-item"><span class="benefit-icon">🏮</span> 命理师专属化解建议</div></div><div class="gift-badge">🎁 今日解锁赠灵签</div><button class="btn btn-primary" onclick="openPaymentSelect()">解锁完整命盘 ¥28</button><div class="paywall-back-btn" onclick="closePaywall()">← 返回</div></div></div>
+<div class="paywall-backdrop" id="paywallBackdrop"><div class="paywall-sheet"><div class="paywall-close" onclick="closePaywall()">✕</div><div class="paywall-headline">此段姻缘，天机未尽</div><div class="benefit-list"><div class="benefit-item"><span class="benefit-icon">🏮</span>双方四柱八字合盘详解</div><div class="benefit-item"><span class="benefit-icon">🏮</span>前世缘分与今生课题</div><div class="benefit-item"><span class="benefit-icon">🏮</span>最佳婚期择吉</div><div class="benefit-item"><span class="benefit-icon">🏮</span>命理师专属化解建议</div></div><div class="gift-badge">🎁 今日解锁赠灵签</div><button class="btn btn-primary" onclick="openPaymentSelect()">解锁完整命盘 ¥28</button><div class="paywall-back-btn" onclick="closePaywall()">← 返回</div></div></div>
 <div class="payment-backdrop" id="paymentBackdrop"><div class="payment-sheet"><div class="payment-close" onclick="closePaymentSelect()">✕</div><div class="payment-headline">选择支付方式</div><div class="payment-options"><div class="payment-option selected" id="payOptionWechat" onclick="selectPayment('wechat')"><div class="payment-option-icon">💚</div><div class="payment-option-label">微信</div></div><div class="payment-option" id="payOptionAlipay" onclick="selectPayment('alipay')"><div class="payment-option-icon">💙</div><div class="payment-option-label">支付宝</div></div></div><button class="btn btn-primary" onclick="confirmPayment()">确认支付</button></div></div>
 <div class="qr-backdrop" id="qrBackdrop"><div class="qr-card"><div class="qr-close" onclick="closeQR()">✕</div><h3>扫码支付 ¥28</h3><div class="qr-payment-type" id="qrPaymentType"></div><p>支付后添加管理员获取姻缘凭证</p><div class="qr-image-wrapper"><img id="qrImage" src="" alt="收款码"><span id="qrNoImg">收款码</span></div><div class="qr-contact">📱 付款完成后➕zs520lwyy领取姻缘凭证</div><div class="qr-input-row"><input type="text" id="verifyCode" placeholder="输入姻缘凭证" maxlength="12"><button class="btn-sm" onclick="verifyAndUnlock()">验证</button></div><div class="qr-error" id="qrError">凭证无效，请重新获取</div><div class="qr-back-btn" onclick="goBackToPaymentSelect()">← 返回</div></div></div>
 <script>
@@ -220,113 +228,4 @@ if(tryCount>=5){lockLevel++;var lm=getLockMinutes(lockLevel);lockUntil=now+lm*60
 }
 
 function isChineseOnly(s){return /^[\u4e00-\u9fff\u3400-\u4dbf]+$/u.test(s)}
-var BLACKLIST=new Set(['测试','测试号','测试员','测试账号','测试名','演示','示例','样例','试用','试用号','未命名','未填写','待填写','无名氏','佚名','匿名','某人','某某','谁谁','何人','路人','随便','随便填','随便写','随便起','随便取','随意','随意填','乱填','乱写','乱打','不知道','不知道啊','没想好','还没想','未定','待定','暂定','暂时','再说','不管了','名字','姓名','称呼','昵称','代号','编号','账号','用户','玩家','游客','访客','我是','我在','是我','你是','他是','她是','我是谁','你是谁','谁是我','谁是你','我叫','我叫啥','叫啥','叫什么','叫啥名','啥名','啥名字','啥玩意','是什么','一一','二二','三三','四四','五五','六六','七七','八八','九九','十十','零零','一二','二三','三四','四五','五六','六七','七八','八九','九十','十一','十二','零一','零二','零三','零四','零五','零六','零七','零八','零九','零十','第一','第二','第三','第四','第五','第六','第七','第八','第九','第十','甲甲','乙乙','丙丙','丁丁','戊戊','己己','庚庚','辛辛','壬壬','癸癸','子子','丑丑','寅寅','卯卯','辰辰','巳巳','午午','未未','申申','酉酉','戌戌','亥亥','张三','李四','王五','赵六','孙七','周八','吴九','郑十','刘一','陈二','杨三','黄四','林五','何六','郭七','马八','罗九','梁十','张三丰','李四海','王五洲','赵六子','孙七郎','周八皮','张三疯','李四光','李四狗','王老五','王老六','赵老七','刘小八','陈小九','小明','小红','小刚','小强','小丽','小芳','小华','小花','小白','小黑','小蓝','小绿','小明同学','小红花','小霸王','小不点','小家伙','小朋友','小可爱','小宝贝','小仙女','小王子','阿明','阿红','阿刚','阿强','阿丽','阿芳','阿华','阿花','阿白','阿黑','哈哈','呵呵','嘻嘻','嘿嘿','吼吼','呼呼','哼哼','嗯嗯','啊啊','哦哦','嗯呐','嗯哪','啦啦','呀呀','哟哟','嘤嘤','呜呜','噗噗','略略','嘎嘎','咔咔','嗒嗒','嘟嘟','咕咕','滴答','叮咚','咔嚓','啪嗒','咕噜','哇塞','哎哟','哎呀','哇呀','噗嗤','嗨嗨','嘿嘿嘿','呵呵呵','哈哈哈','嘻嘻嘻','呜呜呜','嗷嗷','哇哇','小猫','小狗','小猪','小鸡','小鸭','小鱼','小兔','小鸟','小虫','小虾','小蟹','小蛇','猫咪','狗狗','兔兔','熊熊','猪猪','虎虎','龙龙','蛇蛇','马马','羊羊','牛牛','猴猴','花花','草草','树树','叶叶','月月','星星','云云','雨雨','雪雪','风风','雷雷','电电','米饭','面条','馒头','包子','饺子','火锅','烧烤','奶茶','咖啡','可乐','雪碧','果汁','手机','电脑','键盘','鼠标','屏幕','耳机','充电器','数据线','路由器','音箱','老师','学生','医生','护士','警察','律师','司机','厨师','工人','农民','军人','商人','老板','经理','总监','总裁','秘书','会计','出纳','销售','客服','前台','后勤','保安','妈妈','爸爸','爷爷','奶奶','外公','外婆','哥哥','姐姐','弟弟','妹妹','叔叔','阿姨','北京','上海','广州','深圳','杭州','南京','成都','重庆','武汉','西安','天津','苏州','中国','美国','日本','韩国','英国','法国','德国','俄国','印度','泰国','越南','巴西','老六','卧龙','凤雏','大聪明','显眼包','绝绝子','无语子','暴风吸入','吃瓜群众','热心网友','路过群众','不知名网友','神秘人','工具人','打工人','尾款人','干饭人','读书人','考研人','考公人','上岸人','社畜','内卷','躺平','摆烂','摸鱼','划水','搬砖','吃土','剁手','种草','拔草','你好','您好','大家好','你们好','早上好','晚上好','午安','晚安','早安','再见','你好啊','在吗','在不在','有人在吗','哈喽','嗨喽','嗨','哈罗','不告诉你','保密','秘密','隐藏','不说','无可奉告','你猜','你猜猜','猜猜看','你猜啊','就不说','不想说','不说可以吗','不说了','免谈','不说行吗','猜一猜','打我','骂我','吃我','爱我','恨我','找我','问我','看我','听我','教我','打你','骂你','吃你','爱你','恨你','找你','问你','看你','听你','教你','空白','空格','无','没有','暂无','暂时没有','还没起','没起名','无名人','test','admin','root','user','guest','hello','world','demo','sample','abc','def','ghi','jkl','mno','pqr','stu','vwx','xyz','随便看','看看看','测测','试试','玩玩','路过','飘过','闪过','飞过','游过','看一下','试一下','测一测','试一试','玩一玩','瞧一瞧','看一看','瞅瞅']);
-function isValidName(n){
-if(!isChineseOnly(n))return false;
-if(n.length<2||n.length>4)return false;
-if(BLACKLIST.has(n))return false;
-if(n.length===2&&n[0]===n[1])return false;
-if(n.length>=3&&new Set(n.split('')).size===1)return false;
-if(/^[你我他它是这那谁]+[啊呀嘛呢吧吗了]$/.test(n))return false;
-return true}
-
-(function(){var s=document.getElementById('starsLayer');for(var i=0;i<55;i++){var d=document.createElement('div');d.className='star-particle';d.style.cssText='left:'+Math.random()*100+'%;width:'+(1+Math.random()*3)+'px;height:'+d.style.width+';animation-delay:'+Math.random()*12+'s;animation-duration:'+(6+Math.random()*14)+'s;';s.appendChild(d)}
-var c=document.getElementById('cloudsLayer');for(var i=0;i<8;i++){var d=document.createElement('div');d.className='cloud';d.style.cssText='top:'+(10+Math.random()*70)+'%;left:'+Math.random()*100+'%;width:'+(80+Math.random()*120)+'px;height:'+(25+Math.random()*35)+'px;animation-delay:'+Math.random()*20+'s;animation-duration:'+(25+Math.random()*35)+'s;';c.appendChild(d)}
-var p=document.getElementById('petalsLayer');var e=['🌸','💮','🏵️','🌺','🌷','✿','❀'];for(var i=0;i<12;i++){var d=document.createElement('div');d.className='petal';d.textContent=e[Math.floor(Math.random()*e.length)];d.style.cssText='left:'+Math.random()*100+'%;font-size:'+(14+Math.random()*18)+'px;animation-delay:'+Math.random()*8+'s;animation-duration:'+(6+Math.random()*10)+'s;';p.appendChild(d)}})();
-(function(){var c=document.getElementById('loadingParticles');if(c)for(var i=0;i<20;i++){var d=document.createElement('div');d.className='loading-particle';d.style.cssText='left:'+Math.random()*100+'%;animation-delay:'+Math.random()*2+'s;';c.appendChild(d)}})();
-
-var cy=new Date().getFullYear(),dy=Math.min(1995,cy);
-function populateSelect(id,s,e,d){var sel=document.getElementById(id);sel.innerHTML='';for(var v=s;v<=e;v++){var o=document.createElement('option');o.value=v;o.textContent=v;if(v===d)o.selected=true;sel.appendChild(o)}}
-populateSelect('myYear',1985,cy,dy);populateSelect('myMonth',1,12,6);populateSelect('myDay',1,31,15);
-populateSelect('taYear',1985,cy,dy-1);populateSelect('taMonth',1,12,9);populateSelect('taDay',1,31,20);
-function showToast(m){var t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(function(){t.remove()},2200)}
-function getCount(){return parseInt(localStorage.getItem('hehun_unlock')||'8293')}
-function addCount(){var n=getCount()+1;localStorage.setItem('hehun_unlock',n);updateCountDisplay()}
-function updateCountDisplay(){var e=document.getElementById('unlockCount');if(e)e.textContent=getCount().toLocaleString();document.getElementById('counter').textContent=(getCount()+120000).toLocaleString()}
-updateCountDisplay();
-function showScreen(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});var t=document.getElementById('screen'+id);if(t)t.classList.add('active')}
-function getHistory(){try{return JSON.parse(localStorage.getItem('hehun_history')||'[]')}catch(e){return[]}}
-function addHistory(item){var h=getHistory();h.unshift(item);if(h.length>20)h.pop();localStorage.setItem('hehun_history',JSON.stringify(h))}
-function showHistory(){var list=document.getElementById('historyList'),h=getHistory();if(h.length===0){list.innerHTML='<div class="history-empty">暂无记录</div>'}else{list.innerHTML=h.map(function(r){return'<div class="history-item"><span class="h-pair">'+r.my+' & '+r.ta+'</span> · <span class="h-score">'+r.score+'% '+r.verdict+'</span><br><small>'+r.time+'</small></div>'}).join('')}document.getElementById('historyBackdrop').classList.add('active')}
-function closeHistory(){document.getElementById('historyBackdrop').classList.remove('active')}
-document.getElementById('historyBackdrop').addEventListener('click',function(e){if(e.target===this)closeHistory()});
-function startDivination(){var myName=document.getElementById('myName').value.trim(),taName=document.getElementById('taName').value.trim();if(!myName||!taName){showToast('请输入双方姓名');return}if(!isValidName(myName)||!isValidName(taName)){showToast('请输入正确的姓名');return}document.getElementById('rMyName').textContent=myName;document.getElementById('rTaName').textContent=taName;showScreen('Loading');var msgs=['正在合你二人八字…','观五行生克制化…','查宿世姻缘簿…','天机即将显现…'],idx=0,mEl=document.getElementById('loadingMsg'),timer=setInterval(function(){idx++;if(idx<msgs.length)mEl.textContent=msgs[idx];else clearInterval(timer)},2200);setTimeout(function(){clearInterval(timer);var score=72+Math.floor(Math.random()*24),v=score>=85?'天地鸳鸯合':(score>=75?'上等婚配':'欢喜冤家');document.getElementById('matchScore').textContent=score+'%';document.getElementById('verdictText').textContent=v;document.getElementById('rpVerdict').textContent=v;addHistory({my:myName,ta:taName,score:score,verdict:v,time:new Date().toLocaleString()});showScreen('Result')},9000)}
-function openPaywall(){document.getElementById('paywallBackdrop').classList.add('active')}
-function closePaywall(){document.getElementById('paywallBackdrop').classList.remove('active')}
-document.getElementById('paywallBackdrop').addEventListener('click',function(e){if(e.target===this)closePaywall()});
-var selectedPayment='wechat';
-function openPaymentSelect(){closePaywall();document.getElementById('paymentBackdrop').classList.add('active')}
-function closePaymentSelect(){document.getElementById('paymentBackdrop').classList.remove('active')}
-function selectPayment(t){selectedPayment=t;document.getElementById('payOptionWechat').classList.toggle('selected',t==='wechat');document.getElementById('payOptionAlipay').classList.toggle('selected',t==='alipay')}
-function confirmPayment(){showToast('请完成支付后添加好友获取姻缘凭证');closePaymentSelect();document.getElementById('qrBackdrop').classList.add('active');document.getElementById('qrPaymentType').textContent=selectedPayment==='wechat'?'微信支付':'支付宝';document.getElementById('verifyCode').value='';document.getElementById('qrImage').src=PAYMENT_CONFIG[selectedPayment].qrImage}
-function closeQR(){document.getElementById('qrBackdrop').classList.remove('active')}
-document.getElementById('qrBackdrop').addEventListener('click',function(e){if(e.target===this)closeQR()});
-function goBackToPaymentSelect(){closeQR();openPaymentSelect()}
-function saveReport(){showToast('报告已保存（演示版）')}
-function goBackToResult(){showScreen('Result')}
-
-// ===== 剑来水墨粒子背景特效 =====
-(function(){
-var canvas=document.getElementById('jianlaiBg');
-if(!canvas)return;
-var ctx=canvas.getContext('2d');
-var width,height,particles=[];
-
-function Particle(){
-this.x=Math.random()*width;
-this.y=Math.random()*height;
-this.vx=(Math.random()-0.5)*0.3;
-this.vy=(Math.random()-0.8)*0.5;
-this.size=Math.random()*2.5+0.5;
-this.opacity=Math.random()*0.4+0.1;
-this.life=Math.random()*300+100;
-this.maxLife=this.life;
-}
-
-Particle.prototype.update=function(){
-this.x+=this.vx;
-this.y+=this.vy;
-this.life-=0.5;
-if(this.life<=0||this.y<-10||this.x<-10||this.x>width+10){
-this.x=Math.random()*width;
-this.y=height+10;
-this.life=this.maxLife;
-}
-};
-
-Particle.prototype.draw=function(){
-var alpha=(this.life/this.maxLife)*this.opacity;
-ctx.beginPath();
-ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
-ctx.fillStyle='rgba(180,160,120,'+alpha+')';
-ctx.shadowColor='rgba(200,180,140,0.2)';
-ctx.shadowBlur=this.size*2;
-ctx.fill();
-ctx.shadowBlur=0;
-};
-
-function resize(){
-width=window.innerWidth;
-height=window.innerHeight;
-canvas.width=width;
-canvas.height=height;
-}
-
-function createParticles(count){
-for(var i=0;i<count;i++){particles.push(new Particle())}
-}
-
-function animate(){
-ctx.clearRect(0,0,width,height);
-for(var i=0;i<particles.length;i++){particles[i].update();particles[i].draw()}
-requestAnimationFrame(animate);
-}
-
-resize();
-createParticles(80);
-animate();
-window.addEventListener('resize',resize);
-})();
-</script>
-</body>
-</html>
+var BLACKLIST=new Set(['测试','测试号','测试员','测试账号','测试名','演示','示例','样例','试用','试用号','未命名','未填写','待填写','无名氏','佚名','匿名','某人','某某','谁谁','何人','路人','随便','随便填','随便写','随便起','随便取','随意','随意填','乱填','乱写','乱打','不知道','不知道啊','没想好','还没想','未定','待定','暂定','暂时','再说','不管了','名字','姓名','称呼','昵称','代号','编号','账号','用户','玩家','游客','访客','我是','我在','是我','你是','他是','她是','我是谁','你是谁','谁是我','谁是你','我叫','我叫啥','叫啥','叫什么','叫啥名','啥名','啥名字','啥玩意','是什么','一一','二二','三三','四四','五五','六六','七七','八八','九九','十十','零零','一二','二三','三四','四五','五六','六七','七八','八九','九十','十一','十二','零一','零二','零三','零四','零五','零六','零七','零八','零九','零十','第一','第二','第三','第四','第五','第六','第七','第八','第九','第十','甲甲','乙乙','丙丙','丁丁','戊戊','己己','庚庚','辛辛','壬壬','癸癸','子子','丑丑','寅寅','卯卯','辰辰','巳巳','午午','未未','申申','酉酉','戌戌','亥亥','张三','李四','王五','赵六','孙七','周八','吴九','郑十','刘一','陈二','杨三','黄四','林五','何六','郭七','马八','罗九','梁十','张三丰','李四海','王五洲','赵六子','孙七郎','周八皮','张三疯','李四光','李四狗','王老五','王老六','赵老七','刘小八','陈小九','小明','小红','小刚','小强','小丽','小芳','小华','小花','小白','小黑','小蓝','小绿','小明同学','小红花','小霸王','小不点','小家伙','小朋友','小可爱','小宝贝','小仙女','小王子','阿明','阿红','阿刚','阿强','阿丽','阿芳','阿华','阿花','阿白','阿黑','哈哈','呵呵','嘻嘻','嘿嘿','吼吼','呼呼','哼哼','嗯嗯','啊啊','哦哦','嗯呐','嗯哪','啦啦','呀呀','哟哟','嘤嘤','呜呜','噗噗','略略','嘎嘎','咔咔','嗒嗒','嘟嘟','咕咕','滴答','叮咚','咔嚓','啪嗒','咕噜','哇塞','哎哟','哎呀','哇呀','噗嗤','嗨嗨','嘿嘿嘿','呵呵呵','哈哈哈','嘻嘻嘻','呜呜呜','嗷嗷','哇哇','小猫','小狗'
