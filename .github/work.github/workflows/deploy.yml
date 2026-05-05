@@ -1,0 +1,20 @@
+name: Deploy to Deno Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Deno
+        uses: denoland/deployctl@v1
+        with:
+          project: hehun-api
+          entrypoint: api.js
+          root: .
+          deno_token: ${{ secrets.DENO_TOKEN }}
