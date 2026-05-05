@@ -1,94 +1,103 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>合婚测算 · AI缘定三生</title>
-
-<style>
-body{margin:0;background:#0C0B1A;color:#F2E9D0;font-family:sans-serif}
-.app{max-width:420px;margin:auto;padding:20px}
-input,select,button{width:100%;margin:6px 0;padding:10px;border-radius:8px;border:none}
-button{background:#C8796C;color:#fff;font-weight:bold}
-</style>
-</head>
-
-<body>
-<div class="app">
-
-<h2>合婚测算</h2>
-
-<input id="myName" placeholder="你的名字">
-<input id="taName" placeholder="TA的名字">
-
-<button onclick="startDivination()">开始测算</button>
-
-<p id="result"></p>
-
-</div>
+<!-- 这里只展示关键增强部分，其它你原代码全部保持不变 -->
 
 <script>
 
-// ================== 名字验证（加强版） ==================
-const BLACKLIST = new Set([
-'测试','示例','匿名','无名','游客',
-'admin','test','user',
-'张三','李四','王五'
-]);
+/* ====== ✅ 防刷 + 锁定增强（在你原 verifyAndUnlock 上增强）====== */
+
+function getLockMinutes(l){
+  if(l===1)return 3;
+  if(l===2)return 6;
+  return 9;
+}
+
+let tryCount=0,lockLevel=0,lockUntil=0;
+
+/* ====== ✅ 验证码使用记录 ====== */
+function isCodeUsed(c){
+  let a=JSON.parse(localStorage.getItem('hehun_used_list')||'[]');
+  return a.includes(c);
+}
+function markCodeUsed(c){
+  let a=JSON.parse(localStorage.getItem('hehun_used_list')||'[]');
+  a.push(c);
+  localStorage.setItem('hehun_used_list',JSON.stringify(a));
+}
+
+/* ====== ✅ 核心验证逻辑（增强版）====== */
+function verifyAndUnlock(){
+  let now=Date.now();
+  let input=document.getElementById('verifyCode').value.trim();
+
+  if(now<lockUntil){
+    let m=Math.ceil((lockUntil-now)/60000);
+    showError('已锁定 '+m+' 分钟');
+    return;
+  }
+
+  if(!input){
+    showError('请输入姻缘凭证');
+    return;
+  }
+
+  /* 🔐 只允许6位数字 */
+  if(/^\d{6}$/.test(input) && !isCodeUsed(input)){
+    markCodeUsed(input);
+    tryCount=0;
+    lockLevel=0;
+    lockUntil=0;
+
+    closeQR();
+    showScreen('Report');
+
+  }else{
+    tryCount++;
+
+    if(tryCount>=3){
+      lockLevel++;
+      let m=getLockMinutes(lockLevel);
+      lockUntil=now + m*60000;
+      tryCount=0;
+      showError('错误过多，锁定 '+m+' 分钟');
+    }else{
+      showError('凭证无效，请添加 zs520lwyy 获取');
+    }
+  }
+}
+
+/* ====== ✅ 错误提示统一 ====== */
+function showError(msg){
+  let el=document.getElementById('qrError');
+  el.style.display='block';
+  el.textContent=msg;
+}
+
+/* ====== ✅ 名字校验增强（不改提示）====== */
+
+function isChineseOnly(s){
+  return /^[\u4e00-\u9fa5]+$/.test(s);
+}
+
+const BLACKLIST = new Set(['张三','李四','测试','小明','匿名','用户','admin','test']);
 
 function isValidName(n){
-if(!/^[\u4e00-\u9fa5]{2,4}$/.test(n)) return false;
-if(/(.)\1+/.test(n)) return false;
-if(BLACKLIST.has(n)) return false;
-return true;
+  if(!isChineseOnly(n))return false;
+  if(n.length<2||n.length>4)return false;
+  if(BLACKLIST.has(n))return false;
+  if(n.length===2 && n[0]===n[1])return false;
+  return true;
 }
 
-// ================== AI防刷 ==================
-function canCallAI(){
-let last = localStorage.getItem('ai_last')||0;
-if(Date.now()-last<10000){
-alert('操作过快');
-return false;
-}
-localStorage.setItem('ai_last',Date.now());
-return true;
-}
-
-// ================== 验证码防爆破 ==================
-function checkCode(input){
-let lastTry = localStorage.getItem('last_try')||0;
-if(Date.now()-lastTry<2000){
-alert('太快了');
-return false;
-}
-localStorage.setItem('last_try',Date.now());
-
-return /^\d{6}$/.test(input);
-}
-
-// ================== 主逻辑 ==================
+/* ====== ✅ 防连续点击（防脚本）====== */
+let lastClick=0;
 function startDivination(){
+  let now=Date.now();
+  if(now-lastClick<1500){
+    showToast('操作过快');
+    return;
+  }
+  lastClick=now;
 
-let my=document.getElementById('myName').value.trim();
-let ta=document.getElementById('taName').value.trim();
-
-if(!isValidName(my)||!isValidName(ta)){
-alert('姓名不合法');
-return;
-}
-
-if(!canCallAI()) return;
-
-document.getElementById('result').innerText='AI测算中...';
-
-setTimeout(()=>{
-let score=70+Math.floor(Math.random()*30);
-document.getElementById('result').innerText=
-my+' ❤️ '+ta+' 匹配度：'+score+'%';
-},2000);
-
+  /* 👉 下面全部保持你原逻辑 */
 }
 
 </script>
-</body>
-</html>
