@@ -1,103 +1,1572 @@
-<!-- 这里只展示关键增强部分，其它你原代码全部保持不变 -->
-
-<script>
-
-/* ====== ✅ 防刷 + 锁定增强（在你原 verifyAndUnlock 上增强）====== */
-
-function getLockMinutes(l){
-  if(l===1)return 3;
-  if(l===2)return 6;
-  return 9;
-}
-
-let tryCount=0,lockLevel=0,lockUntil=0;
-
-/* ====== ✅ 验证码使用记录 ====== */
-function isCodeUsed(c){
-  let a=JSON.parse(localStorage.getItem('hehun_used_list')||'[]');
-  return a.includes(c);
-}
-function markCodeUsed(c){
-  let a=JSON.parse(localStorage.getItem('hehun_used_list')||'[]');
-  a.push(c);
-  localStorage.setItem('hehun_used_list',JSON.stringify(a));
-}
-
-/* ====== ✅ 核心验证逻辑（增强版）====== */
-function verifyAndUnlock(){
-  let now=Date.now();
-  let input=document.getElementById('verifyCode').value.trim();
-
-  if(now<lockUntil){
-    let m=Math.ceil((lockUntil-now)/60000);
-    showError('已锁定 '+m+' 分钟');
-    return;
-  }
-
-  if(!input){
-    showError('请输入姻缘凭证');
-    return;
-  }
-
-  /* 🔐 只允许6位数字 */
-  if(/^\d{6}$/.test(input) && !isCodeUsed(input)){
-    markCodeUsed(input);
-    tryCount=0;
-    lockLevel=0;
-    lockUntil=0;
-
-    closeQR();
-    showScreen('Report');
-
-  }else{
-    tryCount++;
-
-    if(tryCount>=3){
-      lockLevel++;
-      let m=getLockMinutes(lockLevel);
-      lockUntil=now + m*60000;
-      tryCount=0;
-      showError('错误过多，锁定 '+m+' 分钟');
-    }else{
-      showError('凭证无效，请添加 zs520lwyy 获取');
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" /
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>塔罗牌</title
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root{
+      --bg1:#0b1020;
+      --bg2:#1a1036;
+      --gold:#e7c979;
+      --gold2:#ffefb0;
+      --purple:#8f6bff;
+      --pink:#f07cff;
+      --cyan:#68f0ff;
+      --card:#111827cc;
+      --text:#f3f1ff;
+      --muted:#bdb7da;
+      --danger:#ff7996;
+      --ok:#73f0b7;
+      --shadow:0 10px 40px rgba(0,0,0,.45);
     }
-  }
-}
 
-/* ====== ✅ 错误提示统一 ====== */
-function showError(msg){
-  let el=document.getElementById('qrError');
-  el.style.display='block';
-  el.textContent=msg;
-}
+    body{
+      font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+      min-height:100vh;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 20% 20%, rgba(143,107,255,.22), transparent 25%),
+        radial-gradient(circle at 80% 30%, rgba(240,124,255,.18), transparent 22%),
+        radial-gradient(circle at 50% 80%, rgba(104,240,255,.16), transparent 30%),
+        linear-gradient(135deg, #080b14 0%, #140d28 40%, #0b1020 100%);
+      overflow-x:hidden;
+      position:relative;
+    }
 
-/* ====== ✅ 名字校验增强（不改提示）====== */
+    #stars, #magic {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
 
-function isChineseOnly(s){
-  return /^[\u4e00-\u9fa5]+$/.test(s);
-}
+    .app{
+      position:relative;
+      z-index:2;
+      width:min(1280px, 94vw);
+      margin:0 auto;
+      padding:26px 0 40px;
+    }
 
-const BLACKLIST = new Set(['张三','李四','测试','小明','匿名','用户','admin','test']);
+    .header{
+      text-align:center;
+      padding:20px 10px 10px;
+      position:relative;
+    }
 
-function isValidName(n){
-  if(!isChineseOnly(n))return false;
-  if(n.length<2||n.length>4)return false;
-  if(BLACKLIST.has(n))return false;
-  if(n.length===2 && n[0]===n[1])return false;
-  return true;
-}
+    .title{
+      font-size: clamp(34px, 5vw, 72px);
+      letter-spacing: 8px;
+      font-weight: 900;
+      background: linear-gradient(180deg, #fff8df 0%, var(--gold) 55%, #b88a2b 100%);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      text-shadow: 0 0 30px rgba(231,201,121,.15);
+    }
 
-/* ====== ✅ 防连续点击（防脚本）====== */
-let lastClick=0;
-function startDivination(){
-  let now=Date.now();
-  if(now-lastClick<1500){
-    showToast('操作过快');
-    return;
-  }
-  lastClick=now;
+    .subtitle{
+      margin-top:12px;
+      color:var(--muted);
+      font-size:14px;
+      letter-spacing:2px;
+    }
 
-  /* 👉 下面全部保持你原逻辑 */
-}
+    .halo{
+      width:220px;
+      height:220px;
+      border-radius:50%;
+      position:absolute;
+      left:50%;
+      top:0;
+      transform:translateX(-50%);
+      filter:blur(35px);
+      background: radial-gradient(circle, rgba(231,201,121,.20), rgba(240,124,255,.08), transparent 70%);
+      z-index:-1;
+    }
 
-</script>
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.08);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      border-radius:24px;
+    }
+
+    .topbar{
+      margin-top:18px;
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap:18px;
+    }
+
+    .controls{
+      padding:22px;
+    }
+
+    .controls h2,
+    .history h2,
+    .reading h2{
+      font-size:22px;
+      margin-bottom:16px;
+      color:#fff6d7;
+    }
+
+    .spread-list{
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap:12px;
+      margin-bottom:16px;
+    }
+
+    .spread-btn{
+      padding:16px 14px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.10);
+      background:
+        linear-gradient(180deg, rgba(143,107,255,.20), rgba(255,255,255,.04));
+      color:var(--text);
+      cursor:pointer;
+      transition:.25s ease;
+      text-align:left;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .spread-btn:hover{
+      transform:translateY(-3px);
+      border-color:rgba(231,201,121,.35);
+      box-shadow:0 10px 28px rgba(143,107,255,.18);
+    }
+
+    .spread-btn.active{
+      outline:2px solid rgba(231,201,121,.55);
+      background:
+        linear-gradient(180deg, rgba(231,201,121,.18), rgba(143,107,255,.14));
+    }
+
+    .spread-btn .small{
+      display:block;
+      margin-top:6px;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      margin-top:12px;
+    }
+
+    .btn{
+      border:none;
+      cursor:pointer;
+      border-radius:999px;
+      padding:12px 22px;
+      color:#1e1624;
+      font-weight:800;
+      transition:.25s ease;
+      box-shadow:0 8px 22px rgba(0,0,0,.18);
+    }
+
+    .btn:hover{ transform:translateY(-2px) scale(1.01); }
+    .btn:active{ transform:translateY(0) scale(.99); }
+
+    .btn-primary{
+      background: linear-gradient(180deg, #fff2be, #ddb65c);
+    }
+
+    .btn-secondary{
+      color:var(--text);
+      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
+      border:1px solid rgba(255,255,255,.10);
+    }
+
+    .input-group{
+      margin-top:14px;
+    }
+
+    .label{
+      display:block;
+      margin-bottom:8px;
+      color:#ece4ff;
+      font-size:14px;
+    }
+
+    .question{
+      width:100%;
+      min-height:88px;
+      resize:vertical;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(8,10,24,.48);
+      color:var(--text);
+      padding:14px 16px;
+      outline:none;
+    }
+
+    .question:focus{
+      border-color: rgba(231,201,121,.4);
+      box-shadow:0 0 0 3px rgba(231,201,121,.08);
+    }
+
+    .history{
+      padding:22px;
+      min-height:100%;
+    }
+
+    .history-list{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      max-height:320px;
+      overflow:auto;
+      padding-right:4px;
+    }
+
+    .history-item{
+      padding:12px;
+      border-radius:16px;
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.06);
+    }
+
+    .history-item .time{
+      color:var(--gold2);
+      font-size:12px;
+      margin-bottom:6px;
+    }
+
+    .history-item .name{
+      font-weight:700;
+      margin-bottom:4px;
+    }
+
+    .history-item .desc{
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.5;
+    }
+
+    .table-area{
+      margin-top:18px;
+      padding:22px;
+    }
+
+    .ritual-bar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-bottom:18px;
+    }
+
+    .status{
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .deck-zone{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:18px;
+      margin-bottom:26px;
+      min-height:240px;
+      position:relative;
+    }
+
+    .deck-stack{
+      width:145px;
+      height:230px;
+      position:relative;
+      cursor:pointer;
+      filter:drop-shadow(0 16px 24px rgba(0,0,0,.5));
+      transition: transform .3s ease;
+    }
+
+    .deck-stack:hover{
+      transform: translateY(-5px) scale(1.02);
+    }
+
+    .deck-card{
+      position:absolute;
+      inset:0;
+      border-radius:18px;
+      border:1px solid rgba(231,201,121,.35);
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.10), transparent 30%),
+        linear-gradient(145deg, #1a1636 0%, #0d132b 50%, #1c1441 100%);
+      overflow:hidden;
+    }
+
+    .deck-card::before{
+      content:"";
+      position:absolute;
+      inset:10px;
+      border-radius:14px;
+      border:1px solid rgba(231,201,121,.25);
+    }
+
+    .deck-card::after{
+      content:"✦";
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:54px;
+      color:rgba(231,201,121,.85);
+      text-shadow:0 0 15px rgba(231,201,121,.45);
+    }
+
+    .deck-card:nth-child(2){ transform: translate(5px, 5px) rotate(2deg); opacity:.9; }
+    .deck-card:nth-child(3){ transform: translate(10px, 10px) rotate(4deg); opacity:.8; }
+
+    .glow-ring{
+      position:absolute;
+      width:220px;
+      height:220px;
+      border-radius:50%;
+      background: radial-gradient(circle, rgba(231,201,121,.14), rgba(143,107,255,.08), transparent 70%);
+      filter:blur(8px);
+      z-index:-1;
+      animation: pulse 3s infinite ease-in-out;
+    }
+
+    @keyframes pulse{
+      0%,100%{ transform:scale(1); opacity:.8; }
+      50%{ transform:scale(1.12); opacity:1; }
+    }
+
+    .cards-area{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+      gap:24px;
+      min-height:300px;
+    }
+
+    .card-wrap{
+      width:180px;
+      perspective: 1200px;
+      position:relative;
+    }
+
+    .card-label{
+      text-align:center;
+      margin-top:10px;
+      color:var(--gold2);
+      font-weight:700;
+      letter-spacing:1px;
+    }
+
+    .tarot-card{
+      width:180px;
+      height:300px;
+      position:relative;
+      transform-style:preserve-3d;
+      transition: transform .9s cubic-bezier(.2,.7,.2,1);
+      cursor:pointer;
+      filter: drop-shadow(0 14px 26px rgba(0,0,0,.45));
+    }
+
+    .tarot-card.flipped{
+      transform: rotateY(180deg);
+    }
+
+    .tarot-card.reversed.flipped{
+      transform: rotateY(180deg) rotate(180deg);
+    }
+
+    .tarot-face{
+      position:absolute;
+      inset:0;
+      backface-visibility:hidden;
+      border-radius:20px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.10);
+    }
+
+    .back{
+      background:
+        radial-gradient(circle at 50% 30%, rgba(255,255,255,.08), transparent 35%),
+        linear-gradient(145deg, #241648, #0e1630 55%, #241648);
+    }
+
+    .back::before{
+      content:"";
+      position:absolute;
+      inset:12px;
+      border-radius:16px;
+      border:1px solid rgba(231,201,121,.35);
+      box-shadow: inset 0 0 30px rgba(231,201,121,.08);
+    }
+
+    .back::after{
+      content:"☾ ✦ ☽";
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:36px;
+      letter-spacing:12px;
+      color:rgba(231,201,121,.85);
+      text-shadow:0 0 14px rgba(231,201,121,.35);
+    }
+
+    .front{
+      transform:rotateY(180deg);
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.18), transparent 25%),
+        linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.03)),
+        linear-gradient(145deg, #14152e 0%, #23163e 100%);
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .front::before{
+      content:"";
+      position:absolute;
+      inset:10px;
+      border-radius:16px;
+      border:1px solid rgba(231,201,121,.35);
+      pointer-events:none;
+    }
+
+    .card-top, .card-bottom{
+      text-align:center;
+      color:#fff0be;
+      font-weight:800;
+      letter-spacing:2px;
+      z-index:2;
+    }
+
+    .card-top{ font-size:14px; margin-top:4px; }
+    .card-bottom{ font-size:13px; margin-top:auto; margin-bottom:6px; }
+
+    .card-art{
+      margin:10px auto 8px;
+      width:100%;
+      flex:1;
+      border-radius:16px;
+      position:relative;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.08);
+      background:
+        radial-gradient(circle at 50% 25%, rgba(240,124,255,.24), transparent 24%),
+        radial-gradient(circle at 50% 65%, rgba(104,240,255,.18), transparent 30%),
+        linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01)),
+        linear-gradient(180deg, #0f1430, #1a1130 60%, #120d24);
+    }
+
+    .sigil{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:84px;
+      color:#fff0be;
+      text-shadow:
+        0 0 10px rgba(231,201,121,.35),
+        0 0 25px rgba(143,107,255,.18);
+      animation: floatSigil 4s ease-in-out infinite;
+    }
+
+    @keyframes floatSigil{
+      0%,100%{ transform:translateY(0px) scale(1); }
+      50%{ transform:translateY(-6px) scale(1.03); }
+    }
+
+    .mini-stars{
+      position:absolute;
+      inset:0;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,.85) 1px, transparent 1.5px),
+        radial-gradient(circle, rgba(231,201,121,.75) 1px, transparent 1.5px),
+        radial-gradient(circle, rgba(104,240,255,.55) 1px, transparent 1.5px);
+      background-size: 60px 60px, 90px 90px, 120px 120px;
+      background-position: 10px 20px, 35px 15px, 50px 40px;
+      opacity:.35;
+    }
+
+    .reading{
+      margin-top:18px;
+      padding:22px;
+    }
+
+    .reading-content{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:18px;
+      margin-top:12px;
+    }
+
+    .box{
+      border-radius:20px;
+      padding:18px;
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      min-height:180px;
+    }
+
+    .box h3{
+      color:#fff1b5;
+      margin-bottom:12px;
+      font-size:18px;
+    }
+
+    .box p{
+      color:#ddd7f5;
+      line-height:1.75;
+      font-size:15px;
+    }
+
+    .tag{
+      display:inline-block;
+      padding:5px 10px;
+      border-radius:999px;
+      background:rgba(231,201,121,.12);
+      color:#fff0be;
+      border:1px solid rgba(231,201,121,.2);
+      margin-right:8px;
+      margin-bottom:8px;
+      font-size:12px;
+    }
+
+    .footer-tip{
+      margin-top:16px;
+      text-align:center;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .shine{
+      position:absolute;
+      inset:-40%;
+      background: linear-gradient(120deg, transparent 20%, rgba(255,255,255,.18), transparent 60%);
+      transform:translateX(-120%) rotate(8deg);
+      animation: shineMove 4.2s infinite;
+    }
+
+    @keyframes shineMove{
+      0%{ transform:translateX(-120%) rotate(8deg); }
+      55%,100%{ transform:translateX(120%) rotate(8deg); }
+    }
+
+    .toast{
+      position:fixed;
+      right:20px;
+      bottom:20px;
+      z-index:99;
+      padding:14px 18px;
+      border-radius:16px;
+      background:rgba(10,12,24,.88);
+      border:1px solid rgba(255,255,255,.10);
+      color:#fff;
+      box-shadow: var(--shadow);
+      opacity:0;
+      transform:translateY(14px);
+      transition:.35s ease;
+      pointer-events:none;
+    }
+
+    .toast.show{
+      opacity:1;
+      transform:translateY(0);
+    }
+
+
+
+    html{
+      scroll-behavior:smooth;
+    }
+
+    section,
+    .reading{
+      scroll-margin-top:24px;
+    }
+
+    .stepper{
+      margin-top:18px;
+      padding:14px;
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:10px;
+    }
+
+    .step{
+      border:none;
+      border-radius:16px;
+      padding:12px 10px;
+      cursor:pointer;
+      color:var(--muted);
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      transition:.25s ease;
+      text-align:center;
+    }
+
+    .step:hover{
+      transform:translateY(-2px);
+      border-color:rgba(231,201,121,.28);
+      color:var(--text);
+    }
+
+    .step.active{
+      color:#24190b;
+      background:linear-gradient(180deg, #fff2be, #ddb65c);
+      box-shadow:0 10px 26px rgba(231,201,121,.18);
+      font-weight:900;
+    }
+
+    .step.done{
+      color:var(--ok);
+      border-color:rgba(115,240,183,.35);
+    }
+
+    .step strong{
+      display:block;
+      font-size:14px;
+      margin-bottom:3px;
+    }
+
+    .step span{
+      display:block;
+      font-size:12px;
+      opacity:.9;
+    }
+
+    .nav-hint{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.6;
+    }
+
+    .focus-pulse{
+      animation: focusPulse .9s ease;
+    }
+
+    @keyframes focusPulse{
+      0%{ box-shadow:0 0 0 0 rgba(231,201,121,.00); }
+      35%{ box-shadow:0 0 0 6px rgba(231,201,121,.12); }
+      100%{ box-shadow:0 0 0 0 rgba(231,201,121,.00); }
+    }
+
+
+    .path-indicator{
+      margin:18px auto 0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      color:var(--muted);
+      font-size:13px;
+      letter-spacing:1px;
+      flex-wrap:wrap;
+    }
+
+    .path-indicator span{
+      opacity:.52;
+      transition:.25s ease;
+    }
+
+    .path-indicator span.active{
+      opacity:1;
+      color:var(--gold2);
+      text-shadow:0 0 14px rgba(231,201,121,.25);
+      font-weight:800;
+    }
+
+    .path-indicator span.done{
+      opacity:.9;
+      color:var(--ok);
+    }
+
+    .path-indicator em{
+      font-style:normal;
+      opacity:.35;
+    }
+
+    .screen{
+      display:none;
+      margin-top:18px;
+      animation: screenIn .36s ease both;
+      scroll-margin-top:24px;
+    }
+
+    .screen.active{
+      display:block;
+    }
+
+    @keyframes screenIn{
+      from{ opacity:0; transform:translateY(16px); }
+      to{ opacity:1; transform:translateY(0); }
+    }
+
+    .screen-grid{
+      display:grid;
+      grid-template-columns:1.15fr .85fr;
+      gap:18px;
+    }
+
+    .screen-card{
+      padding:24px;
+    }
+
+    .screen-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:14px;
+      margin-bottom:18px;
+    }
+
+    .screen-kicker{
+      color:var(--gold2);
+      font-size:13px;
+      letter-spacing:2px;
+      margin-bottom:6px;
+    }
+
+    .screen-title{
+      font-size:26px;
+      color:#fff6d7;
+      margin-bottom:8px;
+    }
+
+    .screen-desc{
+      color:var(--muted);
+      line-height:1.7;
+      font-size:14px;
+    }
+
+    .back-btn{
+      border:none;
+      cursor:pointer;
+      white-space:nowrap;
+      border-radius:999px;
+      padding:10px 16px;
+      color:var(--text);
+      background:rgba(255,255,255,.07);
+      border:1px solid rgba(255,255,255,.10);
+      transition:.25s ease;
+    }
+
+    .back-btn:hover{
+      transform:translateX(-2px);
+      border-color:rgba(231,201,121,.3);
+    }
+
+    .chosen-spread{
+      margin:14px 0 0;
+      padding:12px 14px;
+      border-radius:16px;
+      color:#fff0be;
+      background:rgba(231,201,121,.10);
+      border:1px solid rgba(231,201,121,.20);
+      line-height:1.6;
+    }
+
+    .question.large{
+      min-height:150px;
+      font-size:15px;
+      line-height:1.7;
+    }
+
+    .ritual-actions{
+      display:flex;
+      justify-content:center;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:-6px;
+      margin-bottom:24px;
+    }
+
+    .art-orbit{
+      position:absolute;
+      width:74px;
+      height:74px;
+      border-radius:50%;
+      border:1px solid rgba(231,201,121,.30);
+      box-shadow:0 0 26px rgba(231,201,121,.08), inset 0 0 22px rgba(143,107,255,.12);
+    }
+
+    .art-orbit::before,
+    .art-orbit::after{
+      content:"";
+      position:absolute;
+      left:50%;
+      top:50%;
+      width:112px;
+      height:1px;
+      background:linear-gradient(90deg, transparent, rgba(231,201,121,.45), transparent);
+      transform:translate(-50%, -50%) rotate(25deg);
+    }
+
+    .art-orbit::after{
+      transform:translate(-50%, -50%) rotate(-25deg);
+    }
+
+    .sigil{
+      font-size:64px;
+      filter:drop-shadow(0 0 14px rgba(231,201,121,.3));
+    }
+
+    .card-art::after{
+      content:"";
+      position:absolute;
+      left:18px;
+      right:18px;
+      bottom:16px;
+      height:18px;
+      border-radius:50%;
+      background:radial-gradient(ellipse, rgba(104,240,255,.24), transparent 65%);
+    }
+
+    .card-name-ribbon{
+      position:absolute;
+      left:12px;
+      right:12px;
+      bottom:10px;
+      padding:5px 8px;
+      text-align:center;
+      border-radius:999px;
+      color:#24190b;
+      font-size:12px;
+      font-weight:900;
+      background:linear-gradient(180deg, #fff3bd, #dcb45b);
+      z-index:3;
+    }
+
+    @media (max-width: 980px){
+      .topbar,
+      .reading-content,
+      .screen-grid{
+        grid-template-columns:1fr;
+      }
+      .spread-list{
+        grid-template-columns:1fr 1fr;
+      }
+    }
+
+    @media (max-width: 640px){
+      .spread-list{
+        grid-template-columns:1fr;
+      }
+      .stepper{
+        grid-template-columns:1fr 1fr;
+      }
+      .card-wrap{
+        width:150px;
+      }
+      .tarot-card{
+        width:150px;
+        height:255px;
+      }
+      .cards-area{
+        gap:16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stars"></canvas>
+  <canvas id="magic"></canvas>
+
+  <div class="app">
+    <header class="header">
+      <div class="halo"></div>
+      <h1 class="title">塔罗牌</h1>
+      <p class="subtitle">神秘启示 · 命运回响 · 内心答案</p>
+    </header>
+
+    <div class="path-indicator" id="pathIndicator" aria-label="塔罗占卜流程">
+      <span class="active" data-step-label="1">选择牌阵</span><em>›</em>
+      <span data-step-label="2">输入问题</span><em>›</em>
+      <span data-step-label="3">洗牌抽牌</span><em>›</em>
+      <span data-step-label="4">查看解读</span>
+    </div>
+
+    <section class="screen active" id="spreadSection" data-screen-step="1">
+      <div class="screen-grid">
+        <div class="controls panel screen-card">
+          <div class="screen-header">
+            <div>
+              <div class="screen-kicker">第一层</div>
+              <h2 class="screen-title">选择占卜方式</h2>
+              <p class="screen-desc">先确定你要问的方向。选中后会进入下一层，不再把 1、2、3、4 全部塞在同一个方块里。</p>
+            </div>
+          </div>
+
+          <div class="spread-list" id="spreadList">
+            <button class="spread-btn active" data-spread="single">
+              单张指引
+              <span class="small">适合日常、今日建议、当前状态</span>
+            </button>
+            <button class="spread-btn" data-spread="three">
+              三张牌阵
+              <span class="small">过去 / 现在 / 未来</span>
+            </button>
+            <button class="spread-btn" data-spread="love">
+              爱情占卜
+              <span class="small">情感状态 / 阻碍 / 结果</span>
+            </button>
+            <button class="spread-btn" data-spread="career">
+              事业占卜
+              <span class="small">机会 / 风险 / 建议</span>
+            </button>
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-primary" id="goQuestionBtn">下一步：输入问题</button>
+            <button class="btn btn-secondary" id="clearHistoryBtn">清空记录</button>
+          </div>
+        </div>
+
+        <aside class="history panel screen-card">
+          <h2>占卜记录</h2>
+          <div class="history-list" id="historyList"></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="screen" id="questionSection" data-screen-step="2">
+      <div class="controls panel screen-card">
+        <div class="screen-header">
+          <div>
+            <div class="screen-kicker">第二层</div>
+            <h2 class="screen-title">输入你的问题</h2>
+            <p class="screen-desc">把问题写得越具体，后面的解读越有方向。也可以留空，直接做今日指引。</p>
+            <div class="chosen-spread" id="chosenSpreadText">当前牌阵：单张指引</div>
+          </div>
+          <button class="back-btn" id="backToSpreadBtn">← 返回选择牌阵</button>
+        </div>
+
+        <div class="input-group">
+          <label class="label" for="question">你的问题（可选）</label>
+          <textarea class="question large" id="question" placeholder="例如：我最近的事业发展会顺利吗？或者：这段关系还有继续的必要吗？"></textarea>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" id="shuffleBtn">开始洗牌</button>
+          <button class="btn btn-secondary" id="resetBtn">重新开始</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen table-area panel" id="tableSection" data-screen-step="3">
+      <div class="screen-header">
+        <div>
+          <div class="screen-kicker">第三层</div>
+          <h2 class="screen-title">洗牌与抽牌</h2>
+          <p class="screen-desc" id="statusText">请先点击“开始洗牌”，然后抽取塔罗牌。</p>
+        </div>
+        <button class="back-btn" id="backToQuestionBtn">← 返回修改问题</button>
+      </div>
+
+      <div class="ritual-actions">
+        <button class="btn btn-primary" id="drawBtn">抽取塔罗牌</button>
+        <button class="btn btn-secondary" id="shuffleAgainBtn">重新洗牌</button>
+      </div>
+
+      <div class="deck-zone">
+        <div class="glow-ring"></div>
+        <div class="deck-stack" id="deckStack" title="点击牌堆洗牌或抽牌">
+          <div class="deck-card"><div class="shine"></div></div>
+          <div class="deck-card"></div>
+          <div class="deck-card"></div>
+        </div>
+      </div>
+
+      <div class="cards-area" id="cardsArea"></div>
+    </section>
+
+    <section class="screen reading panel" id="readingSection" data-screen-step="4">
+      <div class="screen-header">
+        <div>
+          <div class="screen-kicker">第四层</div>
+          <h2 class="screen-title">命运解读</h2>
+          <p class="screen-desc">这里展示抽牌结果和综合建议。需要调整问题时，可以返回上一层。</p>
+        </div>
+        <button class="back-btn" id="backToDrawBtn">← 返回牌面</button>
+      </div>
+      <div class="reading-content">
+        <div class="box">
+          <h3>抽牌结果</h3>
+          <p id="resultSummary">尚未抽牌。请先开始你的塔罗占卜。</p>
+        </div>
+        <div class="box">
+          <h3>综合建议</h3>
+          <p id="resultAdvice">当你准备好时，命运会通过牌面给你提示。保持专注，静下心来，再进行抽牌。</p>
+        </div>
+      </div>
+      <div class="actions" style="margin-top:18px;">
+        <button class="btn btn-primary" id="restartFromReadingBtn">重新开始一次</button>
+      </div>
+      <div class="footer-tip">提示：点击翻开的卡牌，可再次查看正位 / 逆位及牌义。</div>
+    </section>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const majorArcana = [
+      { name: "愚者", symbol: "🧭", type: "大阿卡那", element: "风", theme: "开始", keywords: ["开始", "冒险", "自由", "未知"], upright: "新的开始、自由、冒险、勇气、打破旧框架", reversed: "冲动、迷茫、逃避责任、方向感不足", advice: "可以开始，但要带着计划开始。" },
+      { name: "魔术师", symbol: "✨", type: "大阿卡那", element: "风", theme: "行动", keywords: ["创造", "资源", "行动", "表达"], upright: "创造力、行动力、掌控资源、实现目标", reversed: "虚张声势、能量分散、计划不落地", advice: "把已有资源整合起来，先做出第一个可见动作。" },
+      { name: "女祭司", symbol: "🌙", type: "大阿卡那", element: "水", theme: "直觉", keywords: ["直觉", "秘密", "等待", "内心"], upright: "直觉、洞察、沉静、隐藏的信息", reversed: "情绪压抑、误判、忽略内心声音", advice: "不要急着要答案，先观察那些没被说出口的信息。" },
+      { name: "女皇", symbol: "🌾", type: "大阿卡那", element: "土", theme: "滋养", keywords: ["成长", "丰盛", "照顾", "吸引力"], upright: "丰盛、爱、滋养、成长、魅力", reversed: "过度依赖、懒散、情绪化、控制欲", advice: "让事情慢慢长出来，别用焦虑催熟结果。" },
+      { name: "皇帝", symbol: "👑", type: "大阿卡那", element: "火", theme: "秩序", keywords: ["规则", "责任", "边界", "稳定"], upright: "秩序、权威、稳定、责任、规则", reversed: "固执、压迫、失控、缺乏弹性", advice: "先立规则和边界，再谈推进。" },
+      { name: "教皇", symbol: "🕯️", type: "大阿卡那", element: "土", theme: "信念", keywords: ["传统", "学习", "指导", "承诺"], upright: "传统、学习、指导、规范、信念", reversed: "盲从、僵化、教条、内在质疑", advice: "可以参考经验，但不要把别人的标准当成唯一答案。" },
+      { name: "恋人", symbol: "💞", type: "大阿卡那", element: "风", theme: "选择", keywords: ["关系", "选择", "吸引", "价值观"], upright: "关系、吸引、选择、价值统一", reversed: "纠结、关系失衡、价值冲突、犹豫", advice: "看清你真正想选择的价值，而不是只看表面的吸引。" },
+      { name: "战车", symbol: "🛡️", type: "大阿卡那", element: "水", theme: "推进", keywords: ["胜利", "控制", "前进", "意志"], upright: "胜利、推进、意志、掌控、突破", reversed: "失衡、急躁、压力过大、方向偏离", advice: "目标可以坚定，但节奏不能失控。" },
+      { name: "力量", symbol: "🦁", type: "大阿卡那", element: "火", theme: "韧性", keywords: ["耐心", "勇气", "温柔", "自控"], upright: "耐心、内在力量、温柔控制、韧性", reversed: "自我怀疑、情绪失控、强撑、疲惫", advice: "真正的强大不是硬撑，而是温柔地坚持。" },
+      { name: "隐者", symbol: "🔦", type: "大阿卡那", element: "土", theme: "独处", keywords: ["思考", "沉淀", "答案", "距离"], upright: "思考、独处、寻找答案、成熟", reversed: "封闭、逃避、孤立、思虑过重", advice: "先和外界拉开一点距离，你会更清楚自己。" },
+      { name: "命运之轮", symbol: "☸️", type: "大阿卡那", element: "火", theme: "变化", keywords: ["转机", "循环", "机会", "时机"], upright: "转机、循环、机会、命运变化", reversed: "停滞、时机未到、反复、无法掌控", advice: "顺势而为，别和变化硬碰硬。" },
+      { name: "正义", symbol: "⚖️", type: "大阿卡那", element: "风", theme: "因果", keywords: ["公平", "责任", "结果", "判断"], upright: "公平、结果、因果、理性、责任", reversed: "不平衡、偏见、逃避后果、拖延决断", advice: "面对事实，做一个能承担后果的决定。" },
+      { name: "倒吊人", symbol: "🔻", type: "大阿卡那", element: "水", theme: "暂停", keywords: ["等待", "牺牲", "换角度", "停顿"], upright: "暂停、换角度、牺牲、等待", reversed: "无意义拖延、停滞不前、抗拒改变", advice: "现在未必适合硬冲，换个角度反而更快。" },
+      { name: "死神", symbol: "🦋", type: "大阿卡那", element: "水", theme: "结束", keywords: ["结束", "蜕变", "断舍离", "重生"], upright: "结束、蜕变、断舍离、重生", reversed: "抗拒结束、拖泥带水、旧局难退", advice: "放下不再适合你的旧模式，新阶段才会出现。" },
+      { name: "节制", symbol: "⚗️", type: "大阿卡那", element: "火", theme: "平衡", keywords: ["融合", "疗愈", "节奏", "协调"], upright: "平衡、疗愈、融合、耐心、节奏", reversed: "失衡、过量、焦躁、极端化", advice: "慢一点，稳一点，持续比猛烈更有效。" },
+      { name: "恶魔", symbol: "⛓️", type: "大阿卡那", element: "土", theme: "束缚", keywords: ["欲望", "执念", "依赖", "诱惑"], upright: "欲望、执念、束缚、沉迷、诱惑", reversed: "挣脱束缚、觉醒、看清依赖关系", advice: "看清你被什么牵着走，答案就开始松动。" },
+      { name: "高塔", symbol: "⚡", type: "大阿卡那", element: "火", theme: "突变", keywords: ["崩塌", "真相", "冲击", "重建"], upright: "突变、崩塌、真相显露、重建", reversed: "危机延后、抗拒改变、内在动荡", advice: "旧结构如果不稳，早点调整比被动崩塌更好。" },
+      { name: "星星", symbol: "⭐", type: "大阿卡那", element: "风", theme: "希望", keywords: ["希望", "灵感", "疗愈", "愿景"], upright: "希望、灵感、疗愈、愿景、纯净", reversed: "失望、气馁、理想感减弱、信心不足", advice: "别急着否定自己，先把微弱的光保护好。" },
+      { name: "月亮", symbol: "🌕", type: "大阿卡那", element: "水", theme: "迷雾", keywords: ["潜意识", "不安", "幻想", "直觉"], upright: "潜意识、迷雾、感受、幻想、直觉", reversed: "真相浮现、恐惧减弱、看清错觉", advice: "信息不清楚时，不要用想象填补事实。" },
+      { name: "太阳", symbol: "☀️", type: "大阿卡那", element: "火", theme: "清晰", keywords: ["成功", "喜悦", "自信", "明朗"], upright: "成功、喜悦、清晰、自信、正能量", reversed: "延迟的快乐、短暂疲惫、自我表达不足", advice: "答案会越来越明朗，你也需要更坦然地表达自己。" },
+      { name: "审判", symbol: "📯", type: "大阿卡那", element: "火", theme: "觉醒", keywords: ["觉醒", "复盘", "召唤", "决定"], upright: "觉醒、召唤、决定、复盘、突破", reversed: "犹豫、自责、逃避召唤、迟迟不变", advice: "别一直停在复盘里，是时候回应内心的召唤。" },
+      { name: "世界", symbol: "🌍", type: "大阿卡那", element: "土", theme: "完成", keywords: ["完成", "圆满", "整合", "收获"], upright: "完成、圆满、整合、收获、开启新周期", reversed: "未完成、差一步、闭环延迟、散乱", advice: "你已经走了很远，现在要把最后一步走完整。" }
+    ];
+
+    const minorSuits = [
+      { suit: "权杖", icon: "🔥", type: "小阿卡那 · 权杖", element: "火", field: "行动、热情、事业推进、创造力", baseUpright: "行动力、热情、目标感、开创", baseReversed: "急躁、能量分散、拖延、冲突", baseAdvice: "把热情变成具体行动，但不要只凭冲动推进。" },
+      { suit: "圣杯", icon: "💧", type: "小阿卡那 · 圣杯", element: "水", field: "感情、关系、情绪、内在需求", baseUpright: "情感流动、共鸣、疗愈、关系连接", baseReversed: "情绪堵塞、逃避感受、依赖、失落", baseAdvice: "先理解真实感受，再决定如何回应关系。" },
+      { suit: "宝剑", icon: "🗡️", type: "小阿卡那 · 宝剑", element: "风", field: "思考、沟通、判断、压力", baseUpright: "理性、沟通、决断、看清问题", baseReversed: "焦虑、误解、过度分析、言语冲突", baseAdvice: "把问题说清楚，也把事实和情绪分开。" },
+      { suit: "星币", icon: "🪙", type: "小阿卡那 · 星币", element: "土", field: "金钱、现实、稳定、长期建设", baseUpright: "稳定、积累、现实成果、长期价值", baseReversed: "停滞、资源不足、现实压力、投入失衡", baseAdvice: "从现实条件出发，稳扎稳打比冒进更有用。" }
+    ];
+
+    const minorRanks = [
+      { rank: "Ace", cn: "一", symbol: "①", theme: "种子", upright: "新的机会、潜力、开始成形", reversed: "机会未成熟、启动困难、信心不足", advice: "先抓住最小但真实的机会。" },
+      { rank: "Two", cn: "二", symbol: "②", theme: "选择", upright: "权衡、合作、初步平衡", reversed: "摇摆、失衡、迟迟不决", advice: "别同时抓太多，先做一个明确选择。" },
+      { rank: "Three", cn: "三", symbol: "③", theme: "扩展", upright: "进展、协作、视野打开", reversed: "配合不顺、期待落差、计划延误", advice: "把计划说清楚，争取外部配合。" },
+      { rank: "Four", cn: "四", symbol: "④", theme: "稳定", upright: "稳定、休整、建立基础", reversed: "停滞、保守、缺乏安全感", advice: "先稳住基础，再考虑下一步。" },
+      { rank: "Five", cn: "五", symbol: "⑤", theme: "冲突", upright: "挑战、竞争、现实摩擦", reversed: "冲突缓和、避免对抗、内耗减少", advice: "不要把所有阻力都看成敌人，先找到真正矛盾。" },
+      { rank: "Six", cn: "六", symbol: "⑥", theme: "调整", upright: "改善、支持、阶段性顺利", reversed: "旧问题反复、支持不足、难以释怀", advice: "接受帮助，也要从旧经验里学到东西。" },
+      { rank: "Seven", cn: "七", symbol: "⑦", theme: "考验", upright: "坚持、防守、评估、策略", reversed: "疲惫、怀疑、策略不足", advice: "别只靠硬撑，调整策略才能走更远。" },
+      { rank: "Eight", cn: "八", symbol: "⑧", theme: "推进", upright: "快速推进、练习、效率、变化", reversed: "拖慢、重复劳动、沟通延迟", advice: "减少杂音，把精力投向最有效的环节。" },
+      { rank: "Nine", cn: "九", symbol: "⑨", theme: "成熟", upright: "接近完成、独立、成果显现", reversed: "过度防备、满足感不足、压力累积", advice: "你已经积累不少，但别让压力遮住成果。" },
+      { rank: "Ten", cn: "十", symbol: "⑩", theme: "完成", upright: "阶段完成、责任、结果落地", reversed: "负担过重、收尾困难、需要释放", advice: "该收尾的收尾，该分担的分担。" },
+      { rank: "Page", cn: "侍从", symbol: "✦", theme: "学习", upright: "新消息、学习、好奇、尝试", reversed: "不成熟、消息延迟、经验不足", advice: "用学习心态开始，不必一开始就完美。" },
+      { rank: "Knight", cn: "骑士", symbol: "♞", theme: "行动", upright: "主动推进、追求、变化、执行", reversed: "鲁莽、反复、方向不稳", advice: "行动要快，但方向要先校准。" },
+      { rank: "Queen", cn: "王后", symbol: "♛", theme: "内在掌控", upright: "成熟、滋养、洞察、稳定吸引", reversed: "情绪化、过度付出、边界不清", advice: "照顾别人之前，也要照顾自己的边界。" },
+      { rank: "King", cn: "国王", symbol: "♚", theme: "外在掌控", upright: "掌控、领导、成熟决策、负责", reversed: "控制欲、固执、压力管理不足", advice: "用成熟和责任处理问题，而不是靠控制。" }
+    ];
+
+    function buildMinorArcana(){
+      return minorSuits.flatMap(suit => minorRanks.map(rank => ({
+        name: `${suit.suit}${rank.cn}`,
+        symbol: `${suit.icon}${rank.symbol}`,
+        type: suit.type,
+        element: suit.element,
+        theme: rank.theme,
+        keywords: [suit.field, rank.theme, rank.upright],
+        upright: `${suit.baseUpright}；${rank.upright}`,
+        reversed: `${suit.baseReversed}；${rank.reversed}`,
+        advice: `${rank.advice}${suit.baseAdvice}`
+      })));
+    }
+
+    const tarotDeck = [...majorArcana, ...buildMinorArcana()];
+    const spreadMap = {
+      single: { name: "单张指引", positions: ["命运指引"], description: "适合快速获得一条明确建议。" },
+      three: { name: "三张牌阵", positions: ["过去", "现在", "未来"], description: "用来观察事情的发展轨迹。" },
+      love: { name: "爱情占卜", positions: ["当前情感状态", "主要阻碍", "感情结果"], description: "适用于恋爱、暧昧、复合、婚姻。" },
+      career: { name: "事业占卜", positions: ["当前机会", "潜在风险", "行动建议"], description: "适用于工作、升职、创业、选择。" }
+    };
+
+    let currentSpread = "single";
+    let currentDraw = [];
+    let hasShuffled = false;
+
+    const spreadList = document.getElementById("spreadList");
+    const statusText = document.getElementById("statusText");
+    const cardsArea = document.getElementById("cardsArea");
+    const resultSummary = document.getElementById("resultSummary");
+    const resultAdvice = document.getElementById("resultAdvice");
+    const historyList = document.getElementById("historyList");
+    const questionInput = document.getElementById("question");
+    const toast = document.getElementById("toast");
+    const chosenSpreadText = document.getElementById("chosenSpreadText");
+
+    function setStep(step){
+      document.querySelectorAll("[data-step-label]").forEach((el)=>{
+        const n = Number(el.dataset.stepLabel);
+        el.classList.toggle("active", n === step);
+        el.classList.toggle("done", n < step);
+      });
+    }
+
+    function showScreen(screenId, step, focusTarget){
+      document.querySelectorAll(".screen").forEach(screen => screen.classList.remove("active"));
+      const screen = document.getElementById(screenId);
+      if(!screen) return;
+      screen.classList.add("active");
+      setStep(step);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      screen.classList.add("focus-pulse");
+      setTimeout(()=>screen.classList.remove("focus-pulse"), 950);
+      if(focusTarget){
+        const target = document.getElementById(focusTarget);
+        if(target && typeof target.focus === "function"){
+          setTimeout(()=>target.focus({ preventScroll:true }), 300);
+        }
+      }
+    }
+
+    function updateChosenSpread(){
+      const spread = spreadMap[currentSpread];
+      chosenSpreadText.textContent = `当前牌阵：${spread.name}｜${spread.description}`;
+    }
+
+    function showToast(text){
+      toast.textContent = text;
+      toast.classList.add("show");
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.remove("show"), 2200);
+    }
+
+    spreadList.addEventListener("click", (e)=>{
+      const btn = e.target.closest(".spread-btn");
+      if(!btn) return;
+      document.querySelectorAll(".spread-btn").forEach(el=>el.classList.remove("active"));
+      btn.classList.add("active");
+      currentSpread = btn.dataset.spread;
+      hasShuffled = false;
+      cardsArea.innerHTML = "";
+      currentDraw = [];
+      updateChosenSpread();
+      resultSummary.textContent = "牌阵已切换。请重新洗牌后再抽取塔罗牌。";
+      resultAdvice.textContent = "每次切换牌阵都建议重新整理心绪，让问题更加集中。";
+      showScreen("questionSection", 2, "question");
+      showToast("已进入问题层，可以输入你的问题");
+    });
+
+    function shuffleArray(arr){
+      const copy = [...arr];
+      for(let i = copy.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function shuffleDeck(){
+      hasShuffled = true;
+      currentDraw = [];
+      cardsArea.innerHTML = "";
+      resultSummary.textContent = "牌堆已被命运重新排列。现在请抽牌。";
+      resultAdvice.textContent = "保持专注，把注意力放在你真正想问的问题上，然后点击“抽取塔罗牌”。";
+      statusText.textContent = "洗牌完成。命运已响应你的心念，可以开始抽牌了。";
+      showScreen("tableSection", 3);
+
+      setTimeout(()=>{
+        const deck = document.getElementById("deckStack");
+        deck.animate([
+          { transform: "translateX(0) rotate(0deg)" },
+          { transform: "translateX(-18px) rotate(-8deg)" },
+          { transform: "translateX(16px) rotate(7deg)" },
+          { transform: "translateX(-10px) rotate(-5deg)" },
+          { transform: "translateX(0) rotate(0deg)" }
+        ], { duration: 900, easing: "ease-in-out" });
+      }, 120);
+
+      burstMagic();
+      showToast("洗牌完成，点击牌堆或按钮抽牌");
+    }
+
+    function drawCards(){
+      if(!hasShuffled){
+        showToast("请先开始洗牌");
+        statusText.textContent = "你还没有洗牌。请先点击“重新洗牌”或返回问题层开始洗牌。";
+        return;
+      }
+
+      const spread = spreadMap[currentSpread];
+      const count = spread.positions.length;
+      const deck = shuffleArray(tarotDeck);
+      currentDraw = deck.slice(0, count).map(card => ({
+        ...card,
+        reversed: Math.random() > 0.5
+      }));
+
+      renderCards(currentDraw, spread.positions);
+      generateReading(currentDraw, currentSpread, questionInput.value.trim());
+      saveHistory(currentDraw, currentSpread, questionInput.value.trim());
+
+      hasShuffled = false;
+      statusText.textContent = `已完成：${spread.name}。点击卡牌可再次查看含义。`;
+      setStep(4);
+      setTimeout(()=>showScreen("readingSection", 4), 1250);
+      burstMagic();
+      showToast("抽牌完成，正在进入解读层");
+    }
+
+    function renderCards(cards, positions){
+      cardsArea.innerHTML = "";
+      cards.forEach((card, i)=>{
+        const wrap = document.createElement("div");
+        wrap.className = "card-wrap";
+
+        const tarot = document.createElement("div");
+        tarot.className = "tarot-card";
+        if(card.reversed) tarot.classList.add("reversed");
+
+        tarot.innerHTML = `
+          <div class="tarot-face back"></div>
+          <div class="tarot-face front">
+            <div class="card-top">${card.type}</div>
+            <div class="card-art">
+              <div class="mini-stars"></div>
+              <div class="art-orbit"></div>
+              <div class="sigil">${card.symbol}</div>
+              <div class="card-name-ribbon">${card.name}</div>
+            </div>
+            <div class="card-bottom">${card.reversed ? "逆位" : "正位"}</div>
+          </div>
+        `;
+
+        const label = document.createElement("div");
+        label.className = "card-label";
+        label.textContent = positions[i];
+
+        wrap.appendChild(tarot);
+        wrap.appendChild(label);
+        cardsArea.appendChild(wrap);
+
+        setTimeout(() => {
+          tarot.classList.add("flipped");
+        }, 380 * (i + 1));
+
+        tarot.addEventListener("click", ()=>{
+          const meaning = card.reversed ? card.reversed : card.upright;
+          const orientation = card.reversed ? "逆位" : "正位";
+          showToast(`${card.name} · ${orientation}：${meaning}`);
+        });
+      });
+    }
+
+    function escapeHtml(str){
+      return String(str || "").replace(/[&<>'"]/g, ch => ({
+        "&":"&amp;", "<":"&lt;", ">":"&gt;", "'":"&#39;", '"':"&quot;"
+      }[ch]));
+    }
+
+    function detectQuestionType(question, spreadType){
+      const q = (question || "").toLowerCase();
+      if(spreadType === "love" || /感情|爱情|恋爱|复合|喜欢|暧昧|分手|婚姻|伴侣|对象|他|她|ta/.test(q)) return "love";
+      if(spreadType === "career" || /工作|事业|面试|跳槽|离职|升职|创业|项目|同事|老板|客户|钱|财|收入|offer|考试|学习/.test(q)) return "career";
+      if(/健康|身体|焦虑|情绪|压力|睡眠|状态|心情/.test(q)) return "self";
+      if(/选择|应该|要不要|能不能|是否|还是|怎么办|未来|结果/.test(q)) return "decision";
+      return "general";
+    }
+
+    function domainTone(type){
+      return {
+        love: {
+          focus: "关系里的真实感受、互动模式和双方是否愿意靠近",
+          push: "不要只看对方态度，也要看这段关系是否让你变得更稳定、更清楚。",
+          caution: "感情问题最怕用猜测代替沟通，先确认事实，再回应情绪。"
+        },
+        career: {
+          focus: "现实机会、资源配置、执行节奏和风险控制",
+          push: "把想法落到具体动作上，越具体越容易看到转机。",
+          caution: "不要只凭一时热情做决定，先核对成本、时间和可承受风险。"
+        },
+        self: {
+          focus: "你的内在状态、压力来源和真正需要被照顾的地方",
+          push: "先让自己恢复稳定，很多答案会在情绪降下来后变清楚。",
+          caution: "不要把疲惫误认为失败，也不要把焦虑当成事实。"
+        },
+        decision: {
+          focus: "选择背后的代价、收益、时机和你真正愿意承担的方向",
+          push: "答案不是绝对好坏，而是哪条路更符合你现在的核心目标。",
+          caution: "迟迟不选也是一种选择，它会消耗机会和精力。"
+        },
+        general: {
+          focus: "当前局势、内心状态和下一步行动方向",
+          push: "把牌面提示转成一个今天就能做的小动作，会比反复犹豫更有效。",
+          caution: "塔罗给的是提醒，不是替你决定；真正改变结果的是你的行动。"
+        }
+      }[type];
+    }
+
+    function cardVoice(card, position, questionType){
+      const orientation = card.reversed ? "逆位" : "正位";
+      const meaning = card.reversed ? card.reversed : card.upright;
+      const suit = card.type.includes("权杖") ? "权杖" : card.type.includes("圣杯") ? "圣杯" : card.type.includes("宝剑") ? "宝剑" : card.type.includes("星币") ? "星币" : "大阿卡那";
+      const domain = domainTone(questionType);
+
+      const suitAngle = {
+        权杖: {
+          love: "这张牌把重点放在主动性和热度上：你们之间有没有继续靠近的动力，比表面答案更重要。",
+          career: "它更像在提醒行动节奏：机会需要你主动推进，不适合只等待别人安排。",
+          self: "它指向精力和动力，说明你需要重新点燃行动感，但别过度消耗。",
+          decision: "它偏向行动派答案：先试探性推进，比一直想象结果更有价值。",
+          general: "它强调行动、热情和推进力。"
+        },
+        圣杯: {
+          love: "这张牌直接触及情绪与亲密感：真正的问题在于感受是否被接住。",
+          career: "它提醒你注意人际氛围和工作中的情绪成本，不只是看结果。",
+          self: "它指向内在需求，说明你的感受需要被认真对待。",
+          decision: "它让你问自己：这个选择是否真的让你安心。",
+          general: "它强调情绪、关系和内在满足。"
+        },
+        宝剑: {
+          love: "这张牌说明沟通和想法是关键，误解可能比感情本身更影响局面。",
+          career: "它提醒你用清晰判断处理问题，文件、沟通、规则和边界都要说清楚。",
+          self: "它指向压力和思虑，说明你可能想得太多，也需要把事实列出来。",
+          decision: "它要求你回到理性分析：哪些是事实，哪些只是担心。",
+          general: "它强调思考、沟通、判断和压力。"
+        },
+        星币: {
+          love: "这张牌把关系拉回现实层面：稳定、承诺、时间投入和实际行动比甜言蜜语更重要。",
+          career: "它关注实际成果、金钱资源和长期积累，适合稳扎稳打。",
+          self: "它提醒你先照顾身体、作息、金钱和生活秩序这些基础。",
+          decision: "它让你评估现实成本：时间、金钱、稳定性和长期收益。",
+          general: "它强调现实、资源、稳定和长期建设。"
+        },
+        大阿卡那: {
+          love: "这是一张影响力较强的牌，说明这段关系背后有更深的课题，不只是眼前互动。",
+          career: "这张牌代表一个较大的阶段性主题，工作上的选择可能会影响后续方向。",
+          self: "它指向你的核心课题，说明这不是小情绪，而是需要认真面对的内在变化。",
+          decision: "它代表关键转折，选择背后有更大的成长主题。",
+          general: "它代表一个较大的生命主题或阶段提醒。"
+        }
+      }[suit][questionType];
+
+      const positionAngle = {
+        "过去": "它说明过去的影响并没有完全消失，可能仍在塑造你现在的判断。",
+        "现在": "它描述的是你当下最需要看见的核心状态。",
+        "未来": "它更像趋势提醒，不是绝对结论；你现在的行动会改变它的呈现方式。",
+        "当前情感状态": "它反映当前关系里的真实温度和你们的互动底色。",
+        "主要阻碍": "它指出卡住局面的关键，不一定是坏事，但需要被正面处理。",
+        "感情结果": "它给出关系后续的倾向，重点仍取决于双方是否愿意调整。",
+        "当前机会": "它代表你现在最值得把握的入口。",
+        "潜在风险": "它提示容易踩坑的地方，提前看见就能降低损耗。",
+        "行动建议": "它更像下一步策略，适合直接转化为行动。",
+        "命运指引": "它是这次问题的核心答案。"
+      }[position] || "它补充了这个问题的一个重要侧面。";
+
+      const orientationText = card.reversed
+        ? `因为它是逆位，能量表现得不顺：${meaning}。这不一定代表坏结果，更像是在提示哪里需要修正。`
+        : `因为它是正位，能量比较顺畅：${meaning}。这说明这部分力量可以被你直接使用。`;
+
+      return `【${position}】${card.name}（${orientation}）——${positionAngle}${suitAngle}${orientationText}${card.advice}`;
+    }
+
+    function generateReading(cards, spreadType, question){
+      const spread = spreadMap[spreadType];
+      const questionType = detectQuestionType(question, spreadType);
+      const domain = domainTone(questionType);
+      const lines = cards.map((c, i)=>cardVoice(c, spread.positions[i], questionType));
+
+      const uprightCount = cards.filter(c => !c.reversed).length;
+      const reversedCount = cards.length - uprightCount;
+      const majorCount = cards.filter(c => c.type === "大阿卡那").length;
+      const suits = cards.map(c => c.type.includes("权杖") ? "行动" : c.type.includes("圣杯") ? "情绪" : c.type.includes("宝剑") ? "沟通/判断" : c.type.includes("星币") ? "现实/资源" : "重大课题");
+      const uniqueSuits = [...new Set(suits)];
+
+      let trend = "";
+      if(reversedCount >= Math.ceil(cards.length / 2)){
+        trend = "这次牌面里逆位偏多，说明事情不是没有机会，而是当前阻力、误会、节奏或内在状态还没有理顺。";
+      }else if(uprightCount === cards.length){
+        trend = "这次牌面正位很多，整体能量比较顺，适合顺势推进，但仍要把细节落地。";
+      }else{
+        trend = "这次牌面正逆交错，说明局势有机会也有阻力，关键在于你能否识别重点并及时调整。";
+      }
+      if(majorCount > 0){
+        trend += ` 其中有 ${majorCount} 张大阿卡那，代表这个问题不只是表面事件，也牵涉到更深层的选择、成长或阶段转换。`;
+      }
+
+      const questionLead = question
+        ? `你问的是：“${escapeHtml(question)}”。这次解读会围绕「${domain.focus}」来看。`
+        : `你没有输入具体问题，所以这次会以「${domain.focus}」作为整体指引。`;
+
+      const actionBank = {
+        love: ["先确认自己的真实需求，再决定要不要继续投入。", "把想问的话说清楚，不要用试探代替沟通。", "观察对方的实际行动，而不是只听承诺。"],
+        career: ["把目标拆成一个本周能完成的小步骤。", "先核对资源、时间和风险，再做决定。", "主动沟通关键条件，不要等问题自己消失。"],
+        self: ["先把作息、情绪和身体状态放回优先级。", "把最消耗你的事情写下来，找出真正源头。", "允许自己慢一点，但不要完全停住。"],
+        decision: ["列出两个选择各自的代价和收益。", "用最小成本先验证，而不是一次押上全部。", "选择能让你长期承担的那条路。"],
+        general: ["今天先完成一个能推动局面的小动作。", "把模糊担心变成具体问题。", "不要急着求最终答案，先处理眼前最关键的一环。"]
+      }[questionType];
+
+      const pickedAction = actionBank[Math.floor(Math.random() * actionBank.length)];
+      const finalAdvice = `${questionLead}\n\n${trend}\n\n牌面集中在：${uniqueSuits.join("、")}。${domain.push}${domain.caution}\n\n下一步建议：${pickedAction}`;
+
+      resultSummary.innerHTML = lines.map(line => `<span class="tag">${escapeHtml(line)}</span>`).join(" ");
+      resultAdvice.innerHTML = escapeHtml(finalAdvice).replace(/\n/g, "<br>");
+    }
+
+    function saveHistory(cards, spreadType, question){
+      const spread = spreadMap[spreadType];
+      const time = new Date().toLocaleString("zh-CN");
+      const summary = cards.map((c, i)=>{
+        const orientation = c.reversed ? "逆位" : "正位";
+        return `${spread.positions[i]}：${c.name}（${orientation}）`;
+      }).join(" / ");
+
+      const record = { time, spread: spread.name, question: question || "未填写问题", summary };
+      const history = JSON.parse(localStorage.getItem("tarot-history") || "[]");
+      history.unshift(record);
+      localStorage.setItem("tarot-history", JSON.stringify(history.slice(0, 20)));
+      renderHistory();
+    }
+
+    function renderHistory(){
+      const history = JSON.parse(localStorage.getItem("tarot-history") || "[]");
+      historyList.innerHTML = "";
+      if(history.length === 0){
+        historyList.innerHTML = `<div class="history-item"><div class="desc">暂无占卜记录，开始你的第一次抽牌吧。</div></div>`;
+        return;
+      }
+      history.forEach(item=>{
+        const div = document.createElement("div");
+        div.className = "history-item";
+        div.innerHTML = `
+          <div class="time">${item.time}</div>
+          <div class="name">${item.spread}</div>
+          <div class="desc">问题：${item.question}</div>
+          <div class="desc" style="margin-top:6px;">结果：${item.summary}</div>
+        `;
+        historyList.appendChild(div);
+      });
+    }
+
+    function resetAll(){
+      currentDraw = [];
+      hasShuffled = false;
+      cardsArea.innerHTML = "";
+      questionInput.value = "";
+      resultSummary.textContent = "已重置。请重新选择问题并开始洗牌。";
+      resultAdvice.textContent = "每一次抽牌，都是一次重新整理内心的过程。";
+      statusText.textContent = "系统已重置。请返回问题层开始洗牌。";
+      showScreen("spreadSection", 1);
+      showToast("已重置");
+    }
+
+    function clearHistory(){
+      localStorage.removeItem("tarot-history");
+      renderHistory();
+      showToast("占卜记录已清空");
+    }
+
+    document.getElementById("goQuestionBtn").addEventListener("click", ()=>{
+      updateChosenSpread();
+      showScreen("questionSection", 2, "question");
+    });
+    document.getElementById("backToSpreadBtn").addEventListener("click", ()=>showScreen("spreadSection", 1));
+    document.getElementById("backToQuestionBtn").addEventListener("click", ()=>showScreen("questionSection", 2, "question"));
+    document.getElementById("backToDrawBtn").addEventListener("click", ()=>showScreen("tableSection", 3));
+    document.getElementById("restartFromReadingBtn").addEventListener("click", resetAll);
+    document.getElementById("shuffleBtn").addEventListener("click", shuffleDeck);
+    document.getElementById("shuffleAgainBtn").addEventListener("click", shuffleDeck);
+    document.getElementById("drawBtn").addEventListener("click", drawCards);
+    document.getElementById("resetBtn").addEventListener("click", resetAll);
+    document.getElementById("clearHistoryBtn").addEventListener("click", clearHistory);
+    questionInput.addEventListener("keydown", (e)=>{
+      if((e.ctrlKey || e.metaKey) && e.key === "Enter"){
+        shuffleDeck();
+      }
+    });
+    document.getElementById("deckStack").addEventListener("click", ()=>{
+      if(!hasShuffled) shuffleDeck();
+      else drawCards();
+    });
+
+    updateChosenSpread();
+    renderHistory();
+
+    const starCanvas = document.getElementById("stars");
+    const magicCanvas = document.getElementById("magic");
+    const sctx = starCanvas.getContext("2d");
+    const mctx = magicCanvas.getContext("2d");
+    let stars = [];
+    let sparks = [];
+
+    function resizeCanvas(){
+      starCanvas.width = window.innerWidth;
+      starCanvas.height = window.innerHeight;
+      magicCanvas.width = window.innerWidth;
+      magicCanvas.height = window.innerHeight;
+      createStars();
+    }
+
+    function createStars(){
+      const count = Math.floor((window.innerWidth * window.innerHeight) / 12000);
+      stars = Array.from({length: count}, () => ({
+        x: Math.random() * starCanvas.width,
+        y: Math.random() * starCanvas.height,
+        r: Math.random() * 1.8 + 0.3,
+        a: Math.random() * 0.8 + 0.2,
+        s: Math.random() * 0.2 + 0.05
+      }));
+    }
+
+    function drawStars(){
+      sctx.clearRect(0,0,starCanvas.width, starCanvas.height);
+      for(const star of stars){
+        star.a += (Math.random() - 0.5) * 0.03;
+        if(star.a < 0.15) star.a = 0.15;
+        if(star.a > 1) star.a = 1;
+        sctx.beginPath();
+        sctx.fillStyle = `rgba(255,255,255,${star.a})`;
+        sctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+        sctx.fill();
+      }
+    }
+
+    function burstMagic(){
+      for(let i = 0; i < 50; i++){
+        sparks.push({
+          x: window.innerWidth / 2 + (Math.random() - .5) * 120,
+          y: window.innerHeight / 2 + (Math.random() - .5) * 120,
+          vx: (Math.random() - .5) * 4,
+          vy: (Math.random() - .5) * 4 - 1.5,
+          life: 50 + Math.random() * 40,
+          size: Math.random() * 3 + 1,
+          color: ["231,201,121", "143,107,255", "104,240,255", "240,124,255"][Math.floor(Math.random()*4)]
+        });
+      }
+    }
+
+    function drawMagic(){
+      mctx.clearRect(0,0,magicCanvas.width, magicCanvas.height);
+      sparks = sparks.filter(p => p.life > 0);
+      sparks.forEach(p=>{
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.02;
+        p.life -= 1;
+        mctx.beginPath();
+        mctx.fillStyle = `rgba(${p.color},${p.life/90})`;
+        mctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+        mctx.fill();
+      });
+    }
+
+    function animate(){
+      drawStars();
+      drawMagic();
+      requestAnimationFrame(animate);
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+    animate();
+  </script>
+</body>
+</html>
